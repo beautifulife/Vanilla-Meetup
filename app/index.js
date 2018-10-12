@@ -1,5 +1,5 @@
 // Load application styles
-import 'styles/index.scss';
+import 'styles/index.less';
 
 // ================================
 // START YOUR APP HERE
