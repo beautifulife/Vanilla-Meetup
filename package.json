@@ -1,14 +1,15 @@
 {
-  "name": "assignment-boilerplate",
+  "name": "2nd-test",
   "version": "1.0.0",
-  "description": "Assignment Boilerplate",
+  "description": "5th Generation 2nd Test",
   "author": "Ken Huh <ken@vanillacoding.co>",
   "license": "MIT",
-  "homepage": "https://github.com/vanilla-coding/assignment-boilerplate",
+  "homepage": "https://github.com/vanilla-coding/2nd-test",
   "scripts": {
     "dev": "cross-env NODE_ENV=dev webpack-dev-server --progress --mode development --config webpack.config.dev.js"
   },
   "dependencies": {
+    "jquery": "^3.3.1",
     "lodash": "4.17.11"
   },
   "devDependencies": {
