@@ -25,8 +25,8 @@ $ yarn dev (or npm run dev)
 
 여러분이 만들어야 할 웹은 지역 기반 Meetup 관리 어플리케이션입니다. 주요 기능은 다음과 같습니다.
 
-- [ ] 메인 화면에는 Google Map과 Meetup List를 보여줄 수 있어야 합니다.
-- [ ] 사용자는 Google Map에서 원하는 지역을 클릭하여 선택할 수 있습니다.
+- [ ] 메인 화면에는 지도와 Meetup List를 보여줄 수 있어야 합니다.
+- [ ] 사용자는 지도에서 원하는 지역을 클릭하여 선택할 수 있습니다.
 - [ ] [Meetup Upcoming Events API](https://www.meetup.com/meetup_api/docs/find/upcoming_events/)를 이용하여 사용자가 선택한 지역의 Meetup List를 보여주어야 합니다. (API Key는 이 [링크](https://secure.meetup.com/meetup_api/key/)에서 만들 수 있습니다.)
 - [ ] Meetup List는 10개만 보여주면 됩니다.
 - [ ] Meetup List는 기본적인 이벤트의 정보들을 보여주어야 합니다. 추가적으로 마음껏 Upcoming Events 정보를 이용해서 사용하셔도 됩니다. 아래 목록은 최소한의 요구 사항입니다.
