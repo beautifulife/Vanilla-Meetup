@@ -2,9 +2,133 @@
 // but allowing components to change
 // http://www.paulirish.com/2012/box-sizing-border-box-ftw/
 html, body {
+    height: 100%;
+    min-width: 800px;
+    margin: 0;
     box-sizing: border-box;
-    background-color: pink;
+    font-family: 'Lato', sans-serif;
+    color: rgba(0, 0, 0, 0.8);
 }
 *, *:before, *:after {
     box-sizing: inherit;
+}
+
+.content {
+    height: 100%;
+}
+
+h1 {
+    margin: 0;
+}
+
+header {
+    display: flex;
+    align-items: center;
+    height: 70px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+header > h1 {
+    flex-basis: 250px;
+    margin-left: 20px;
+}
+
+.header-nav {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-right: 15px;
+}
+
+.header-nav > span {
+    width: 40px;
+    height: 40px;
+    margin-right: 5px;
+    text-align: center;
+    line-height: 40px;
+    cursor: pointer;
+}
+
+.header-noti {
+
+}
+
+.header-avatar {
+    border: 1px solid black;
+    border-radius: 100%;
+}
+
+.section-map {
+    flex: 1;
+    position: relative;
+    height: calc(100% - 100px);
+}
+
+#map-main {
+    height: 100%;
+}
+
+.nav-main {
+    position: absolute;
+    top: 17%;
+    left: 2%;
+    // width: 350px;
+    height: 75%;
+    padding: 10px;
+    border: 1px solid black;
+    border-radius: 10px;
+    background-color: white;
+    text-align: center;
+}
+
+.btn-nav-main-toggle {
+    position: absolute;
+    top: 18%;
+    left: 3%;
+    width: 35px;
+    height: 35px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-nav-main-toggle.active{
+    transform: rotate(180deg);
+}
+
+.section-content {
+    height: 50%;
+}
+
+.content-result-wrapper {
+    padding: 30px 50px;
+}
+
+.content-result-title {
+    display: flex;
+    align-items: center;
+    height: 40px;
+    border-bottom: 1px solid black;
+}
+
+.content-result-title > span {
+    margin-left: 15px;
+}
+
+.content-result-main {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.hidden {
+    display: none;
+}
+
+footer {
+    flex-basis: 29px;
+    border-top: 1px solid rgba(0, 0, 0, 0.5);
+    font-size: 12px;
+    text-align: center;
+    line-height: 29px;
+    letter-spacing: 0.5px;
 }

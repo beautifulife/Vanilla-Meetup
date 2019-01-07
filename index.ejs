@@ -4,10 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width">
     <title><%= htmlWebpackPlugin.options.title %></title>
+    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuo1JkXZUrlRrIsZoGUdmZyjLsJBiwmCU">
+    </script>
 </head>
 <body>
     <div class="content">
-        <h1>Boilerplate</h1>
+        <header>
+            <h1>Vanilla-Meetup</h1>
+            <nav class="header-nav">
+                <span class="">버튼</span>
+                <span class="header-noti">알림</span>
+                <span class="header-avatar">압타</span>
+            </nav>
+        </header>
+        <section class="section-map">
+            <div id="map-main"></div>
+            <div class="nav-main">nav다</div>
+            <img class="btn-nav-main-toggle" src="/assets/images/btn_nav_main.png">
+        </section>
+        <section class="section-content">
+            <div class="content-result-wrapper">
+                <div class="content-result-title">
+                    <span>ㅇㅇㅇ 검색결과</span>
+                </div>
+                <div class="content-result-main"></div>
+            </div>
+        </section>
+        <footer>
+            <span>Any questions? &nbsp;beautifulife.github.io</span>
+        </footer>
     </div>
 </body>
 </html>
