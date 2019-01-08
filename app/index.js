@@ -17,6 +17,7 @@ const vanillaMeetup = {
   map: undefined,
   markerStorage: [],
   meetupData: [],
+  favoriteMeetupData: [],
   isDone: true,
   centerPosition: { lat: 37.503219, lon: 127.022119 },
   getApiKey: (() => {
@@ -156,7 +157,7 @@ function makeListItem(data) {
   const timeParagraph = document.createElement('p');
   const photoWrapperDiv = document.createElement('div');
   const rvspWrapperDiv = document.createElement('div');
-  const favoriteButtonSpan = document.createElement('span');
+  const addFavoriteSpan = document.createElement('span');
   const rvspSpan = document.createElement('span');
 
   contentList.classList.add('list-content');
@@ -165,13 +166,13 @@ function makeListItem(data) {
   timeParagraph.classList.add('list-item-time');
   photoWrapperDiv.classList.add('list-item-photo-wrapper');
   rvspWrapperDiv.classList.add('list-item-rvsp-wrapper');
-  favoriteButtonSpan.classList.add('btn-add-favorite');
+  addFavoriteSpan.classList.add('btn-add-favorite');
 
   titleParagraph.textContent = data.title;
   groupParagraph.textContent = data.groupName;
   timeParagraph.textContent = data.date;
   rvspSpan.textContent = `${data.rvsp.yes}명이 참석 예정입니다.`;
-  favoriteButtonSpan.innerHTML = '<i class="fas fa-plus"></i>';
+  addFavoriteSpan.innerHTML = '<i class="fas fa-plus"></i>';
 
   $listContentWrapper.appendChild(contentList);
   contentList.appendChild(titleParagraph);
@@ -179,7 +180,7 @@ function makeListItem(data) {
   contentList.appendChild(timeParagraph);
   contentList.appendChild(photoWrapperDiv);
   contentList.appendChild(rvspWrapperDiv);
-  contentList.appendChild(favoriteButtonSpan);
+  contentList.appendChild(addFavoriteSpan);
   data.hostThumbnail.forEach((item) => {
     const photoDiv = document.createElement('div');
 
@@ -201,6 +202,38 @@ function makeListItem(data) {
     rvspSpan.textContent = `자리가 ${limitMinusYes} 개 남았습니다.`;
     rvspWrapperDiv.appendChild(rvspSpan);
   }
+
+  addFavoriteSpan.addEventListener('click', addFavorite);
+}
+
+function addFavorite(ev) {
+  const savedCurrentTarget = ev.currentTarget;
+  const removeFavoriteSpan = document.createElement('span');
+  
+  ev.currentTarget.classList.add('active');
+  removeFavoriteSpan.classList.add('btn-remove-favorite');
+  removeFavoriteSpan.innerHTML = '<i class="fas fa-star"></i>';
+  removeFavoriteSpan.addEventListener('click', removeFavorite);
+
+  setTimeout(() => {
+    savedCurrentTarget.parentNode.appendChild(removeFavoriteSpan);
+    savedCurrentTarget.remove();
+  }, 500);
+}
+
+function removeFavorite(ev) {
+  const savedCurrentTarget = ev.currentTarget;
+  const addFavoriteSpan = document.createElement('span');
+
+  ev.currentTarget.classList.add('active');
+  addFavoriteSpan.classList.add('btn-add-favorite');
+  addFavoriteSpan.innerHTML = '<i class="fas fa-plus"></i>';
+  addFavoriteSpan.addEventListener('click', addFavorite);
+
+  setTimeout(() => {
+    savedCurrentTarget.parentNode.appendChild(addFavoriteSpan);
+    savedCurrentTarget.remove();
+  }, 500);
 }
 
 function makeMarker(data) {
