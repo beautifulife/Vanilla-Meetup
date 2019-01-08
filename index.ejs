@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width">
     <title><%= htmlWebpackPlugin.options.title %></title>
     <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+    <!-- <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuo1JkXZUrlRrIsZoGUdmZyjLsJBiwmCU&"></script> -->
     <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuo1JkXZUrlRrIsZoGUdmZyjLsJBiwmCU&language=en">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuo1JkXZUrlRrIsZoGUdmZyjLsJBiwmCU&language=en&libraries=places">
     </script>
 </head>
 <body>
@@ -19,19 +20,35 @@
                 <span class="header-avatar">압타</span>
             </nav>
         </header>
-        <section class="section-map">
-            <div id="map-main"></div>
-            <div class="nav-main">nav다</div>
-            <img class="btn-nav-main-toggle" src="/assets/images/btn_nav_main.png">
-        </section>
-        <section class="section-content">
-            <div class="content-result-wrapper">
-                <div class="content-result-title">
-                    <span>ㅇㅇㅇ 검색결과</span>
+        <div class="main_content">
+            <section class="section-search">
+                <div class="search-toggle-btn-wrapper">
+                    <span class="btn-search-toggle">
+                        Meetup List
+                    </span>
                 </div>
-                <div class="content-result-main"></div>
-            </div>
-        </section>
+                <div class="search-nav">
+                    <div class="search-box-wrapper">
+                        <input type="text" id="search-box" placeholder="SEARCH">
+                    </div>
+                    <div class="search-details"></div>
+                </div>
+                <div class="nav-main hidden">
+                    <div class="nav-main-menu"></div>
+                    <div class="nav-main-list"></div>
+                </div>
+                <!-- <img class="btn-nav-main-toggle" src="/assets/images/btn_nav_main.png"> -->
+            </section>
+            <section class="section-map">
+                <div id="map-main"></div>
+                <div class="content-result-wrapper hidden">
+                    <div class="content-result-title">
+                        <span>ㅇㅇㅇ 검색결과</span>
+                    </div>
+                    <div class="content-result-main"></div>
+                </div>
+            </section>
+        </div>
         <footer>
             <span>Any questions? &nbsp;beautifulife.github.io</span>
         </footer>

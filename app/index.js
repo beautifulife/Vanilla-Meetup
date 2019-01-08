@@ -9,10 +9,10 @@ import 'styles/index.less';
 import $ from 'jquery';
 
 const $noticationButton = document.getElementsByClassName('header-noti')[0];
+const $searchBox = document.getElementById('search-box');
 
 const vanillaMeetup = {
   map: undefined,
-  meetupList: [],
   markerStorage: [],
   meetupData: [],
   isDone: true,
@@ -31,15 +31,15 @@ function initMap() {
     center: {lat: 37.503219, lng: 127.022119},
     zoom: 12,
   });
-
-  const marker = new google.maps.Marker({
-    position: {lat: 37.503219, lng: 127.022119},
-    map: vanillaMeetup.map,
-  });
-
-  const infoWindow = new google.maps.InfoWindow({
-    content: '<h1>Vanilla-Coding</h1>',
-  });
+  const defaultBounds = new google.maps.LatLngBounds(
+    new google.maps.LatLng(-33.8902, 151.1759),
+    new google.maps.LatLng(-33.8474, 151.2631),
+  );
+  const options = {
+    bounds: defaultBounds,
+    types: ['establishment'],
+  };
+  const autocomplete = new google.maps.places.Autocomplete($searchBox, options);
 
   vanillaMeetup.map.addListener('click', (ev) => {
     if (vanillaMeetup.isDone) {
@@ -50,14 +50,8 @@ function initMap() {
   });
 
   // map.panTo(marker.getPosition())
-
-  marker.addListener('mouseover', () => {
-    infoWindow.open(vanillaMeetup.map, marker);
-  });
-
-  marker.addListener('mouseout', () => {
-    infoWindow.close();
-  });
+  autocomplete.bindTo('bounds', vanillaMeetup.map);
+  vanillaMeetup.markerStorage.push(marker);
 }
 
 window.onload = initMap;
@@ -66,9 +60,9 @@ $noticationButton.addEventListener('click', searchAndCleansData);
 
 function searchAndCleansData() {
   const url = [
-    `https://api.meetup.com/find/upcoming_events?key=${vanillaMeetup.getApiKey()}&`,
-    `page=10&lat=${vanillaMeetup.centerPosition.lat}&lon=${vanillaMeetup.centerPosition.lon}&`,
-    `fields=event_hosts`
+    `https://api.meetup.com/find/upcoming_events?key=${vanillaMeetup.getApiKey()}`,
+    `&page=10&lat=${vanillaMeetup.centerPosition.lat}&lon=${vanillaMeetup.centerPosition.lon}`,
+    `&fields=event_hosts`
   ].join(' ');
 
   makeAjaxPromise(url)
@@ -99,7 +93,8 @@ function makeAjaxPromise(url) {
 }
 
 function cleansData(meetupData) {
-  return meetupData.forEach((data, index) => {
+  console.log(meetupData);
+  meetupData.forEach((data, index) => {
     vanillaMeetup.meetupData[index] = {
       title: data.name,
       position: {
