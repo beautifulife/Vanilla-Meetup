@@ -16,9 +16,13 @@
         <header>
             <h1><span>모</span>두의 <span>모</span>임</h1>
             <nav class="header-nav">
-                <span class="">버튼</span>
-                <span class="header-noti">알림</span>
-                <span class="header-avatar">압타</span>
+                <span class="header-notification">
+                    <span>알림</span>
+                    <span class="notification-icon"></span>
+                </span>
+                <span class="header-favorite">
+                    <i class="fas fa-star"></i>
+                </span>
             </nav>
         </header>
         <div class="main-content">
@@ -30,7 +34,7 @@
                 </div>
                 <div class="search-nav">
                     <div class="search-box-wrapper">
-                        <input type="text" id="search-box" placeholder="검색">
+                        <input type="text" id="search-box" placeholder="지역 검색">
                     </div>
                     <div class="search-details"></div>
                 </div>
@@ -41,12 +45,6 @@
             </section>
             <section class="section-map">
                 <div id="map-main"></div>
-                <div class="content-result-wrapper hidden">
-                    <div class="content-result-title">
-                        <span>ㅇㅇㅇ 검색결과</span>
-                    </div>
-                    <div class="content-result-main"></div>
-                </div>
             </section>
         </div>
         <footer>

@@ -53,22 +53,45 @@ header > h1 > span {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    margin-right: 25px;
+    margin-right: 20px;
 }
 
 .header-nav > span {
     width: 40px;
     height: 40px;
-    margin-right: 10px;
-    font-size: 14px;
+    margin-right: 15px;
     text-align: center;
-    line-height: 40px;
     cursor: pointer;
 }
 
-.header-avatar {
-    border: 1px solid rgba(0, 0, 0, 0.2);
+.header-favorite{
+    font-size: 30px;
+    color: #F64060;
+}
+
+.header-notification{
+    position: relative;
+    font-size: 14px;
+    line-height: 43px;
+}
+
+.notification-icon {
+    position: absolute;
+    top: 2px;
+    right: -5px;
+    width: 15px;
+    height: 15px;
     border-radius: 100%;
+    font-size: 9px;
+    line-height: 15px;
+    background-color: #F64060;
+    color: white;
+    transition: all 0.2s;
+}
+
+.notification-icon .hidden{
+    opacity: 0;
+    transform: scale(0);
 }
 
 .main-content {
@@ -142,7 +165,7 @@ header > h1 > span {
 .list-content-layer {
     position: absolute;
     bottom: 0;
-    left: -350px;
+    left: -400px;
     width: 100%;
     height: calc(100% - 80px);
     background-color: white;
@@ -170,7 +193,7 @@ header > h1 > span {
 }
 
 .list-content-layer.active {
-    left: 0;
+    left: 1px;
     border-top: 1px solid rgba(0, 0, 0, 0.2);
     border-right: 1px solid rgba(0, 0, 0, 0.2);
 }
@@ -259,47 +282,9 @@ header > h1 > span {
     transform: translateY(55px) rotate(-360deg);
 }
 
-.btn-nav-main-toggle {
-    position: absolute;
-    top: 18%;
-    left: 3%;
-    width: 35px;
-    height: 35px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-nav-main-toggle.active{
-    transform: rotate(180deg);
-}
-
-.section-content {
-    height: 50%;
-}
-
-.content-result-wrapper {
-    padding: 30px 50px;
-}
-
-.content-result-title {
-    display: flex;
-    align-items: center;
-    height: 40px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-}
-
-.content-result-title > span {
-    margin-left: 15px;
-}
-
-.content-result-main {
-    display: flex;
-    justify-content: space-evenly;
-}
-
-.hidden {
-    display: none;
-}
+// .hidden {
+//     display: none;
+// }
 
 footer {
     flex-basis: 29px;

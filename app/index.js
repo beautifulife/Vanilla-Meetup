@@ -8,18 +8,23 @@ import 'styles/index.less';
 // You can use jquery for ajax request purpose only.
 import $ from 'jquery';
 
-const $noticationButton = document.getElementsByClassName('header-noti')[0];
+const $favoriteButton = document.getElementsByClassName('header-favorite')[0];
+const $notificationButton = document.getElementsByClassName('header-notification')[0];
 const $searchBox = document.getElementById('search-box');
-const $listContentLayer = document.getElementsByClassName('list-content-layer')[0];
 const $searchToggle = document.getElementsByClassName('btn-search-toggle')[0];
-const $listContentWrapper = document.getElementsByClassName('list-content-wrapper')[0];
+const $listContentLayer = document.getElementsByClassName('list-content-layer')[0];
+let $listContentWrapper = document.getElementsByClassName('list-content-wrapper')[0];
 const vanillaMeetup = {
   map: undefined,
   markerStorage: [],
-  meetupData: [],
-  favoriteMeetupData: [],
+  meetupData: {},
   isDone: true,
   centerPosition: { lat: 37.503219, lon: 127.022119 },
+  favoriteMeetupData: (() => {
+    const localStorageData = JSON.parse(localStorage.getItem('favoriteData'));
+
+    return localStorageData || {};
+  })(),
   getApiKey: (() => {
     const key = '2e705e58e1279627c794e2e19767d';
 
@@ -59,8 +64,21 @@ function initMap() {
 
 window.onload = initMap;
 
-$noticationButton.addEventListener('click', searchAndCleansData);
+$favoriteButton.addEventListener('click', showFavoriteList);
+$notificationButton.addEventListener('click', showNotificationList);
 $searchToggle.addEventListener('click', toggleSearchAndList);
+
+function showFavoriteList(ev) {
+  $listContentLayer.classList.add('active');
+  
+  if (Object.keys(vanillaMeetup.favoriteMeetupData).length) {
+    renderData(vanillaMeetup.favoriteMeetupData);
+  }
+}
+
+function showNotificationList(ev) {
+  console.log('noti event');
+}
 
 function toggleSearchAndList(ev) {
   if (ev.currentTarget.textContent === '모임 목록') {
@@ -108,7 +126,7 @@ function makeAjaxPromise(url) {
 
 function cleansData(meetupData) {
   console.log(meetupData);
-  meetupData.forEach((data, index) => {
+  meetupData.forEach((data) => {
     const position = {};
     const hostName = [];
     const hostPhoto = [];
@@ -128,7 +146,7 @@ function cleansData(meetupData) {
       }
     });
 
-    vanillaMeetup.meetupData[index] = {
+    vanillaMeetup.meetupData[data.id] = {
       title: data.name,
       groupName: data.group.name,
       position,
@@ -146,11 +164,13 @@ function renderData(cleansedData) {
     removeMarker();
   }
 
-  cleansedData.forEach(data => makeMarker(data));
-  cleansedData.forEach(data => makeListItem(data));
+  removeList();
+
+  Object.keys(cleansedData).forEach(data => makeMarker(cleansedData[data]));
+  Object.keys(cleansedData).forEach(data => makeListItem(cleansedData[data], data));
 }
 
-function makeListItem(data) {
+function makeListItem(data, dataId) {
   const contentList = document.createElement('li');
   const titleParagraph = document.createElement('p');
   const groupParagraph = document.createElement('p');
@@ -166,13 +186,23 @@ function makeListItem(data) {
   timeParagraph.classList.add('list-item-time');
   photoWrapperDiv.classList.add('list-item-photo-wrapper');
   rvspWrapperDiv.classList.add('list-item-rvsp-wrapper');
-  addFavoriteSpan.classList.add('btn-add-favorite');
 
   titleParagraph.textContent = data.title;
   groupParagraph.textContent = data.groupName;
   timeParagraph.textContent = data.date;
   rvspSpan.textContent = `${data.rvsp.yes}명이 참석 예정입니다.`;
-  addFavoriteSpan.innerHTML = '<i class="fas fa-plus"></i>';
+
+  if (vanillaMeetup.favoriteMeetupData[dataId]) {
+    addFavoriteSpan.classList.add('btn-remove-favorite');
+    addFavoriteSpan.innerHTML = '<i class="fas fa-star"></i>';
+    addFavoriteSpan.addEventListener('click', removeFavorite);
+  } else {
+    addFavoriteSpan.classList.add('btn-add-favorite');
+    addFavoriteSpan.innerHTML = '<i class="fas fa-plus"></i>';
+    addFavoriteSpan.addEventListener('click', addFavorite);
+  }
+  
+  contentList.dataset.id = dataId;
 
   $listContentWrapper.appendChild(contentList);
   contentList.appendChild(titleParagraph);
@@ -202,14 +232,18 @@ function makeListItem(data) {
     rvspSpan.textContent = `자리가 ${limitMinusYes} 개 남았습니다.`;
     rvspWrapperDiv.appendChild(rvspSpan);
   }
-
-  addFavoriteSpan.addEventListener('click', addFavorite);
 }
 
 function addFavorite(ev) {
   const savedCurrentTarget = ev.currentTarget;
+  const dataId = savedCurrentTarget.parentNode.dataset.id;
   const removeFavoriteSpan = document.createElement('span');
-  
+
+  vanillaMeetup.favoriteMeetupData[dataId] = vanillaMeetup.meetupData[dataId];
+  localStorage.setItem('favoriteData', JSON.stringify(vanillaMeetup.favoriteMeetupData));
+  console.log(JSON.parse(localStorage.getItem('favoriteData')));
+
+
   ev.currentTarget.classList.add('active');
   removeFavoriteSpan.classList.add('btn-remove-favorite');
   removeFavoriteSpan.innerHTML = '<i class="fas fa-star"></i>';
@@ -223,7 +257,12 @@ function addFavorite(ev) {
 
 function removeFavorite(ev) {
   const savedCurrentTarget = ev.currentTarget;
+  const dataId = savedCurrentTarget.parentNode.dataset.id;
   const addFavoriteSpan = document.createElement('span');
+  debugger;
+  delete vanillaMeetup.favoriteMeetupData[dataId];
+  localStorage.setItem('favoriteData', JSON.stringify(vanillaMeetup.favoriteMeetupData));
+  console.log(JSON.parse(localStorage.getItem('favoriteData')));
 
   ev.currentTarget.classList.add('active');
   addFavoriteSpan.classList.add('btn-add-favorite');
@@ -241,7 +280,6 @@ function makeMarker(data) {
     position: data.position,
     map: vanillaMeetup.map,
   });
-
   const infoWindow = new google.maps.InfoWindow({
     content: makeContentForm(data),
   });
@@ -249,11 +287,9 @@ function makeMarker(data) {
   marker.addListener('mouseover', () => {
     infoWindow.open(vanillaMeetup.map, marker);
   });
-
   marker.addListener('mouseout', () => {
     infoWindow.close();
   });
-
   vanillaMeetup.markerStorage.push(marker);
 
   function makeContentForm(contents) {
@@ -264,4 +300,11 @@ function makeMarker(data) {
 function removeMarker() {
   vanillaMeetup.markerStorage.forEach(marker => marker.setMap(null));
   vanillaMeetup.markerStorage = [];
+}
+
+function removeList() {
+  $listContentWrapper.remove();
+  $listContentWrapper = document.createElement('ul');
+  $listContentWrapper.classList.add('list-content-wrapper');
+  $listContentLayer.appendChild($listContentWrapper);
 }
