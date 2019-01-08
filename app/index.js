@@ -10,7 +10,8 @@ import $ from 'jquery';
 
 const $noticationButton = document.getElementsByClassName('header-noti')[0];
 const $searchBox = document.getElementById('search-box');
-
+const $listContentLayer = document.getElementsByClassName('list-content-layer')[0];
+const $searchToggle = document.getElementsByClassName('btn-search-toggle')[0];
 const vanillaMeetup = {
   map: undefined,
   markerStorage: [],
@@ -51,14 +52,24 @@ function initMap() {
 
   // map.panTo(marker.getPosition())
   autocomplete.bindTo('bounds', vanillaMeetup.map);
-  vanillaMeetup.markerStorage.push(marker);
 }
 
 window.onload = initMap;
 
 $noticationButton.addEventListener('click', searchAndCleansData);
+$searchToggle.addEventListener('click', toggleSearchAndList);
 
-function searchAndCleansData() {
+function toggleSearchAndList(ev) {
+  if (ev.currentTarget.textContent === '모임 목록') {
+    $listContentLayer.classList.add('active');
+    ev.currentTarget.textContent = '모임 검색';
+  } else {
+    $listContentLayer.classList.remove('active');
+    ev.currentTarget.textContent = '모임 목록';
+  }
+}
+
+function searchAndCleansData(ev) {
   const url = [
     `https://api.meetup.com/find/upcoming_events?key=${vanillaMeetup.getApiKey()}`,
     `&page=10&lat=${vanillaMeetup.centerPosition.lat}&lon=${vanillaMeetup.centerPosition.lon}`,

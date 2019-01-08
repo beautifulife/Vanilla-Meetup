@@ -4,37 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width">
     <title><%= htmlWebpackPlugin.options.title %></title>
-    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Lato|Nanum+Myeongjo" rel="stylesheet">
     <!-- <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuo1JkXZUrlRrIsZoGUdmZyjLsJBiwmCU&"></script> -->
     <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuo1JkXZUrlRrIsZoGUdmZyjLsJBiwmCU&language=en&libraries=places">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuo1JkXZUrlRrIsZoGUdmZyjLsJBiwmCU&language=kor&libraries=places">
     </script>
 </head>
 <body>
     <div class="content">
         <header>
-            <h1>Vanilla-Meetup</h1>
+            <h1><span>모</span>두의 <span>모</span>임</h1>
             <nav class="header-nav">
                 <span class="">버튼</span>
                 <span class="header-noti">알림</span>
                 <span class="header-avatar">압타</span>
             </nav>
         </header>
-        <div class="main_content">
+        <div class="main-content">
             <section class="section-search">
                 <div class="search-toggle-btn-wrapper">
                     <span class="btn-search-toggle">
-                        Meetup List
+                        모임 목록
                     </span>
                 </div>
                 <div class="search-nav">
                     <div class="search-box-wrapper">
-                        <input type="text" id="search-box" placeholder="SEARCH">
+                        <input type="text" id="search-box" placeholder="검색">
                     </div>
                     <div class="search-details"></div>
                 </div>
-                <div class="nav-main hidden">
-                    <div class="nav-main-menu"></div>
+                <div class="list-content-layer">
                     <div class="nav-main-list"></div>
                 </div>
                 <!-- <img class="btn-nav-main-toggle" src="/assets/images/btn_nav_main.png"> -->
@@ -50,7 +49,7 @@
             </section>
         </div>
         <footer>
-            <span>Any questions? &nbsp;beautifulife.github.io</span>
+            <span>문의사항은 &nbsp;beautifulife.github.io</span> &nbsp;으로 연락 주시기 바랍니다.
         </footer>
     </div>
 </body>
