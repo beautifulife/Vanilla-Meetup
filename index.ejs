@@ -5,13 +5,12 @@
     <meta name="viewport" content="width=device-width">
     <title><%= htmlWebpackPlugin.options.title %></title>
     <link href="https://fonts.googleapis.com/css?family=Lato|Gugi|Nanum+Brush+Script" rel="stylesheet">
-    <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuo1JkXZUrlRrIsZoGUdmZyjLsJBiwmCU&language=kor&libraries=places">
-    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuo1JkXZUrlRrIsZoGUdmZyjLsJBiwmCU&language=kor&libraries=places"></script>
     <script defer src="https://use.fontawesome.com/releases/v5.6.3/js/all.js" integrity="sha384-EIHISlAOj4zgYieurP0SdoiBYfGJKkgWedPHH4jCzpCXLmzVsw1ouK59MuUtP4a1" crossorigin="anonymous"></script>
 </head>
 <body>
-    <div class="content">
+    <div id="block-fouc" style="width:100vw; height:100vh; background-image:url(/assets/images/intro_img.jpg); background-size:cover; background-position:center center;"></div>
+    <div class="base-content-wrapper">
         <div class="intro-page">
             <div class="intro-background-layer">
                 <h1 class="intro-title">인연의 힘을 믿는 당신과 함께합니다.</h1>
@@ -25,7 +24,7 @@
                     <span>알림</span>
                     <span class="notification-icon hidden"></span>
                 </span>
-                <span class="header-favorite">
+                <span class="btn-header-favorite">
                     <i class="fas fa-star"></i>
                 </span>
             </div>

@@ -9,26 +9,38 @@ import 'styles/index.less';
 import $ from 'jquery';
 
 window.onload = function() {
-  const $startSessionButton = document.getElementsByClassName('btn-start-session')[0];
-  const $favoriteButton = document.getElementsByClassName('header-favorite')[0];
+  const $startAppButton = document.getElementsByClassName('btn-start-session')[0];
+  const $favoriteButton = document.getElementsByClassName('btn-header-favorite')[0];
   const $notificationButton = document.getElementsByClassName('header-notification')[0];
   const $notificationIcon = document.getElementsByClassName('notification-icon')[0];
-  const $searchToggle = document.getElementsByClassName('btn-search-toggle')[0];
+  const $searchToggleButton = document.getElementsByClassName('btn-search-toggle')[0];
   const $searchMapBox = document.getElementById('search-map-box');
   const $searchMeetupBox = document.getElementById('search-meetup-box');
   const $searchRadiusSlider = document.getElementById('search-radius-slider');
-  const $searchOrderBest = document.getElementById('btn-search-order-best');
-  const $searchOrderTime = document.getElementById('btn-search-order-time');
+  const $searchBestOrderButton = document.getElementById('btn-search-order-best');
+  const $searchTimeOrderButton = document.getElementById('btn-search-order-time');
   const $searchCategoryButton = document.getElementsByClassName('btn-search-category')[0];
   const $listContentLayer = document.getElementsByClassName('list-content-layer')[0];
   let $listContentWrapper = document.getElementsByClassName('list-content-wrapper')[0];
   const vanillaMeetup = {
     map: null,
-    markerStorage: {},
+    markerData: {},
     meetupData: {},
     categoryData: {},
+    notificationData: {},
+    notificationCount: 0,
+    errorData: [],
     isDone: true,
-    centerPosition: { lat: 37.503219, lon: 127.022119 },
+    centerPosition: {
+      lat: 37.503219,
+      lon: 127.022119
+    },
+    advanceSearch: {
+      radius: 3,
+      order: 'best',
+      text: '',
+      category: ''
+    },
     favoriteMeetupData: localStorage.getItem('favoriteData') ? JSON.parse(localStorage.getItem('favoriteData')) : {},
     getApiKey: (() => {
       const key = '2e705e58e1279627c794e2e19767d';
@@ -36,35 +48,25 @@ window.onload = function() {
       return function() {
         return key;
       };
-    })(),
-    notificationCount: 0,
-    notificationData: {},
-    advanceSearch: {
-      radius: 3,
-      order: 'best',
-      text: '',
-      category: ''
-    }
+    })()
   };
 
   $favoriteButton.addEventListener('click', showFavoriteList);
   $notificationButton.addEventListener('click', showNotificationList);
-  $searchToggle.addEventListener('click', toggleSearchAndList);
+  $searchToggleButton.addEventListener('click', toggleSearchAndList);
   $searchMeetupBox.addEventListener('keydown', setMeetupTextValue);
   $searchRadiusSlider.addEventListener('change', setRadiusValue);
   $searchRadiusSlider.addEventListener('input', changeRadiusView);
   $searchCategoryButton.addEventListener('click', getCategoryData);
-  $searchOrderBest.addEventListener('input', setOrderValue);
-  $searchOrderTime.addEventListener('input', setOrderValue);
+  $searchBestOrderButton.addEventListener('input', setOrderValue);
+  $searchTimeOrderButton.addEventListener('input', setOrderValue);
 
   $searchCategoryButton.addEventListener('click', (ev) => {
     ev.currentTarget.lastElementChild.classList.toggle('hidden');
   });
 
-  $startSessionButton.addEventListener('click', (ev) => {
-    const $introPage = document.getElementsByClassName('intro-page')[0];
-
-    $introPage.style.left = '-100%';
+  $startAppButton.addEventListener('click', () => {
+    document.getElementsByClassName('intro-page')[0].style.left = '-100%';
   });
 
   initMap();
@@ -79,22 +81,25 @@ window.onload = function() {
 
     vanillaMeetup.map.addListener('click', (ev) => {
       if (vanillaMeetup.isDone) {
+        vanillaMeetup.isDone = false;
         vanillaMeetup.centerPosition = { lat: ev.latLng.lat(), lon: ev.latLng.lng() };
         searchAndGetData();
         vanillaMeetup.map.panTo({ lat: ev.latLng.lat(), lng: ev.latLng.lng() });
       }
     });
 
-    autoComplete.addListener('place_changed', (ev) => {
+    autoComplete.addListener('place_changed', () => {
       const place = autoComplete.getPlace();
 
       if (place.geometry) {
         vanillaMeetup.map.panTo(place.geometry.location);
         vanillaMeetup.map.setZoom(12);
+
         vanillaMeetup.centerPosition = {
           lat: place.geometry.location.lat(),
           lon: place.geometry.location.lng()
         };
+
         searchAndGetData();
       } else {
         $searchMapBox.placeholder = '도시를 선택하세요';
@@ -102,6 +107,187 @@ window.onload = function() {
     });
 
     autoComplete.bindTo('bounds', vanillaMeetup.map);
+  }
+
+  function searchAndGetData() {
+    const url = [
+      `https://api.meetup.com/find/upcoming_events?key=${vanillaMeetup.getApiKey()}`,
+      `&page=10&lat=${vanillaMeetup.centerPosition.lat}&lon=${vanillaMeetup.centerPosition.lon}`,
+      `&radius=${vanillaMeetup.advanceSearch.radius}&order=${vanillaMeetup.advanceSearch.order}`,
+      `&text=${vanillaMeetup.advanceSearch.text}&topic_category=${vanillaMeetup.advanceSearch.category}&fields=event_hosts`,
+    ].join('');
+
+    $listContentLayer.classList.add('active');
+    $listContentLayer.firstElementChild.classList.add('hidden');
+
+    makeAjaxPromise(url)
+      .then((meetupData) => {
+        if (meetupData.events.length) {
+          vanillaMeetup.meetupData = {};
+          cleansData(meetupData.events);
+          renderData(vanillaMeetup.meetupData);
+        }
+
+        $listContentWrapper.classList.remove('hidden');
+        vanillaMeetup.isDone = true;
+      })
+      .catch((err) => {
+        vanillaMeetup.isDone = true;
+        vanillaMeetup.errorData.push(err);
+        console.error(err.message);
+      });
+  }
+
+  function makeAjaxPromise(url) {
+    return new Promise((resolve, reject) => {
+      $.ajax({
+        url,
+        dataType: 'jsonp',
+        success: (responsedData) => {
+          if (responsedData.data.errors) {
+            reject(responsedData.data.errors[0]);
+          } else {
+            resolve(responsedData.data);
+          }
+        },
+        error: (err) => {
+          reject(err);
+        }
+      });
+    });
+  }
+
+  function cleansData(meetupData) {
+    meetupData.forEach((data) => {
+      const position = {};
+      const hostName = [];
+      const hostPhoto = [];
+      const hostThumbnail = [];
+      const date = data.local_date + '  ' + data.local_time;
+
+      try {
+        position.lat = data.venue ? data.venue.lat : data.group.lat;
+        position.lng = data.venue ? data.venue.lon : data.group.lon;
+        data.event_hosts.forEach(item => hostName.push(item.name));
+
+        data.event_hosts.forEach((item) => {
+          if (item.photo) {
+            hostPhoto.push(item.photo.photo_link);
+            hostThumbnail.push(item.photo.thumb_link);
+          } else {
+            hostPhoto.push('/assets/images/sub_img.png');
+            hostThumbnail.push('/assets/images/sub_img.png');
+          }
+        });
+
+        vanillaMeetup.meetupData[data.id] = {
+          title: data.name,
+          groupName: data.group.name,
+          position,
+          date,
+          rvsp: { limit: data.rsvp_limit, yes: data.yes_rsvp_count },
+          hostName,
+          hostPhoto,
+          hostThumbnail,
+        };
+      } catch (err) {
+        vanillaMeetup.isDone = true;
+        vanillaMeetup.errorData.push(err);
+        console.error(err);
+      }
+    });
+  }
+
+  function renderData(cleansedData) {
+    if (Object.keys(vanillaMeetup.markerData).length) {
+      removeMarker();
+    }
+
+    removeList();
+    Object.keys(cleansedData).forEach(dataId => makeListItem(cleansedData[dataId], dataId));
+    Object.keys(cleansedData).forEach(dataId => makeMarker(cleansedData[dataId], dataId));
+    vanillaMeetup.isDone = true;
+  }
+
+  function makeListItem(data, dataId) {
+    const contentList = document.createElement('li');
+    const titleParagraph = document.createElement('p');
+    const groupParagraph = document.createElement('p');
+    const timeParagraph = document.createElement('p');
+    const photoWrapperDiv = document.createElement('div');
+    const rvspWrapperDiv = document.createElement('div');
+    const addFavoriteSpan = document.createElement('span');
+    const rvspYesSpan = document.createElement('span');
+
+    contentList.classList.add('list-content');
+    titleParagraph.classList.add('list-item-title');
+    groupParagraph.classList.add('list-item-group');
+    timeParagraph.classList.add('list-item-time');
+    photoWrapperDiv.classList.add('list-item-photo-wrapper');
+    rvspWrapperDiv.classList.add('list-item-rvsp-wrapper');
+    titleParagraph.textContent = data.title;
+    groupParagraph.textContent = data.groupName;
+    timeParagraph.textContent = data.date;
+    rvspYesSpan.textContent = `${data.rvsp.yes}명이 참석 예정입니다.`;
+    contentList.dataset.id = dataId;
+
+    if (vanillaMeetup.favoriteMeetupData[dataId]) {
+      addFavoriteSpan.classList.add('btn-remove-favorite');
+      addFavoriteSpan.innerHTML = '<i class="fas fa-star"></i>';
+      addFavoriteSpan.addEventListener('click', removeFavorite);
+    } else {
+      addFavoriteSpan.classList.add('btn-add-favorite');
+      addFavoriteSpan.innerHTML = '<i class="fas fa-plus"></i>';
+      addFavoriteSpan.addEventListener('click', addFavorite);
+    }
+
+    photoWrapperDiv.addEventListener('mouseover', (ev) => {
+      if (ev.target.classList.contains('list-item-photo')) {
+        ev.target.firstElementChild.classList.remove('hidden');
+      }
+    });
+
+    photoWrapperDiv.addEventListener('mouseout', (ev) => {
+      if (ev.target.classList.contains('list-item-photo')) {
+        ev.target.firstElementChild.classList.add('hidden');
+      }
+    });
+
+    contentList.addEventListener('mouseover', focusOnItem);
+    contentList.addEventListener('mouseout', unfocusItem);
+    $listContentWrapper.appendChild(contentList);
+    contentList.appendChild(titleParagraph);
+    contentList.appendChild(groupParagraph);
+    contentList.appendChild(timeParagraph);
+    contentList.appendChild(photoWrapperDiv);
+    contentList.appendChild(rvspWrapperDiv);
+    contentList.appendChild(addFavoriteSpan);
+    rvspWrapperDiv.appendChild(rvspYesSpan);
+
+    data.hostThumbnail.forEach((item, index) => {
+      const photoDiv = document.createElement('div');
+      const hostNameSpan = document.createElement('span');
+
+      hostNameSpan.textContent = data.hostName[index];
+      hostNameSpan.classList.add('list-item-hostname', 'hidden');
+      photoDiv.appendChild(hostNameSpan);
+      photoDiv.classList.add('list-item-photo');
+      photoDiv.style.backgroundImage = `url('${item}')`;
+      photoWrapperDiv.appendChild(photoDiv);
+    });
+
+    if (data.rvsp.limit) {
+      const rvspSpan = document.createElement('span');
+      let limitMinusYes = data.rvsp.limit - data.rvsp.yes;
+
+      if (limitMinusYes < 0) {
+        limitMinusYes = 0;
+      }
+
+      rvspSpan.classList.add('list-item-rvsp');
+      rvspSpan.textContent = `자리가 ${limitMinusYes} 개 남았습니다.`;
+      rvspWrapperDiv.appendChild(rvspSpan);
+    }
   }
 
   function setMeetupTextValue(ev) {
@@ -113,9 +299,9 @@ window.onload = function() {
 
   function setOrderValue(ev) {
     if (ev.currentTarget.value === 'best') {
-      $searchOrderTime.checked = false;
+      $searchTimeOrderButton.checked = false;
     } else {
-      $searchOrderBest.checked = false;
+      $searchBestOrderButton.checked = false;
     }
 
     vanillaMeetup.advanceSearch.order = ev.currentTarget.value;
@@ -161,7 +347,7 @@ window.onload = function() {
       notificationLayer.classList.add('notification-layer');
 
       Object.keys(vanillaMeetup.notificationData).forEach((key) => {
-        const notificationItem =`<li class="notification-item">
+        const notificationItem = `<li class="notification-item">
             <span><b>${vanillaMeetup.notificationData[key].action}</b> favorite meetup</span><br>
             <span>${vanillaMeetup.notificationData[key].title}</span>
           </li>`;
@@ -199,6 +385,8 @@ window.onload = function() {
           renderCategory();
         })
         .catch((err) => {
+          vanillaMeetup.isDone = true;
+          vanillaMeetup.errorData.push(err);
           console.error(err.message);
         });
     }
@@ -227,185 +415,8 @@ window.onload = function() {
     }
   }
 
-  function searchAndGetData() {
-    const url = [
-      `https://api.meetup.com/find/upcoming_events?key=${vanillaMeetup.getApiKey()}`,
-      `&page=10&lat=${vanillaMeetup.centerPosition.lat}&lon=${vanillaMeetup.centerPosition.lon}`,
-      `&radius=${vanillaMeetup.advanceSearch.radius}&order=${vanillaMeetup.advanceSearch.order}`,
-      `&text=${vanillaMeetup.advanceSearch.text}&topic_category=${vanillaMeetup.advanceSearch.category}&fields=event_hosts`,
-    ].join('');
-
-    $listContentLayer.classList.add('active');
-    $listContentLayer.firstElementChild.classList.add('hidden');
-    console.log(url, vanillaMeetup.centerPosition);
-
-    makeAjaxPromise(url)
-      .then((meetupData) => {
-        console.log('성공', meetupData);
-        vanillaMeetup.meetupData = {};
-        cleansData(meetupData.events);
-        renderData(vanillaMeetup.meetupData);
-      })
-      .catch((err) => {
-        console.error(err.message);
-      });
-  }
-
-  function makeAjaxPromise(url) {
-    return new Promise((resolve, reject) => {
-      $.ajax({
-        url,
-        dataType: 'jsonp',
-        success: (responsedData) => {
-          if (responsedData.data.errors) {
-            reject(responsedData.data.errors[0]);
-          } else {
-            resolve(responsedData.data);
-          }
-        },
-        error: (err) => {
-          reject(err);
-        },
-      });
-    });
-  }
-
-  function cleansData(meetupData) {
-    meetupData.forEach((data) => {
-      const position = {};
-      const hostName = [];
-      const hostPhoto = [];
-      const hostThumbnail = [];
-      const date = data.local_date + '  ' + data.local_time;
-
-      try {
-        position.lat = data.venue ? data.venue.lat : data.group.lat;
-        position.lng = data.venue ? data.venue.lon : data.group.lon;
-        data.event_hosts.forEach(item => hostName.push(item.name));
-
-        data.event_hosts.forEach((item) => {
-          if (item.photo) {
-            hostPhoto.push(item.photo.photo_link);
-            hostThumbnail.push(item.photo.thumb_link);
-          } else {
-            hostPhoto.push('/assets/images/sub_img.png');
-            hostThumbnail.push('/assets/images/sub_img.png');
-          }
-        });
-
-        vanillaMeetup.meetupData[data.id] = {
-          title: data.name,
-          groupName: data.group.name,
-          position,
-          date,
-          rvsp: { limit: data.rsvp_limit, yes: data.yes_rsvp_count },
-          hostName,
-          hostPhoto,
-          hostThumbnail,
-        };
-      } catch (err) {
-        console.error(err);
-      }
-    });
-  }
-
-  function renderData(cleansedData) {
-    if (Object.keys(vanillaMeetup.markerStorage).length) {
-      removeMarker();
-    }
-
-    removeList();
-    Object.keys(cleansedData).forEach(dataId => makeListItem(cleansedData[dataId], dataId));
-    Object.keys(cleansedData).forEach(dataId => makeMarker(cleansedData[dataId], dataId));
-    vanillaMeetup.isDone = true;
-  }
-
-  function makeListItem(data, dataId) {
-    const contentList = document.createElement('li');
-    const titleParagraph = document.createElement('p');
-    const groupParagraph = document.createElement('p');
-    const timeParagraph = document.createElement('p');
-    const photoWrapperDiv = document.createElement('div');
-    const rvspWrapperDiv = document.createElement('div');
-    const addFavoriteSpan = document.createElement('span');
-    const rvspYesSpan = document.createElement('span');
-
-    contentList.classList.add('list-content');
-    titleParagraph.classList.add('list-item-title');
-    groupParagraph.classList.add('list-item-group');
-    timeParagraph.classList.add('list-item-time');
-    photoWrapperDiv.classList.add('list-item-photo-wrapper');
-    rvspWrapperDiv.classList.add('list-item-rvsp-wrapper');
-
-    titleParagraph.textContent = data.title;
-    groupParagraph.textContent = data.groupName;
-    timeParagraph.textContent = data.date;
-    rvspYesSpan.textContent = `${data.rvsp.yes}명이 참석 예정입니다.`;
-
-    if (vanillaMeetup.favoriteMeetupData[dataId]) {
-      addFavoriteSpan.classList.add('btn-remove-favorite');
-      addFavoriteSpan.innerHTML = '<i class="fas fa-star"></i>';
-      addFavoriteSpan.addEventListener('click', removeFavorite);
-    } else {
-      addFavoriteSpan.classList.add('btn-add-favorite');
-      addFavoriteSpan.innerHTML = '<i class="fas fa-plus"></i>';
-      addFavoriteSpan.addEventListener('click', addFavorite);
-    }
-
-    photoWrapperDiv.addEventListener('mouseover', (ev) => {
-      if (ev.target.classList.contains('list-item-photo')) {
-        ev.target.firstElementChild.classList.remove('hidden');
-      }
-    });
-
-    photoWrapperDiv.addEventListener('mouseout', (ev) => {
-      if (ev.target.classList.contains('list-item-photo')) {
-        ev.target.firstElementChild.classList.add('hidden');
-      }
-    });
-
-    contentList.addEventListener('mouseover', focusOnItem);
-    contentList.addEventListener('mouseout', unfocusItem);
-    
-    contentList.dataset.id = dataId;
-
-    $listContentWrapper.appendChild(contentList);
-    contentList.appendChild(titleParagraph);
-    contentList.appendChild(groupParagraph);
-    contentList.appendChild(timeParagraph);
-    contentList.appendChild(photoWrapperDiv);
-    contentList.appendChild(rvspWrapperDiv);
-    contentList.appendChild(addFavoriteSpan);
-    rvspWrapperDiv.appendChild(rvspYesSpan);
-
-    data.hostThumbnail.forEach((item, index) => {
-      const photoDiv = document.createElement('div');
-      const hostNameSpan = document.createElement('span');
-
-      hostNameSpan.textContent = data.hostName[index];
-      hostNameSpan.classList.add('list-item-hostname', 'hidden');
-      photoDiv.appendChild(hostNameSpan);
-      photoDiv.classList.add('list-item-photo');
-      photoDiv.style.backgroundImage = `url('${item}')`;
-      photoWrapperDiv.appendChild(photoDiv);
-    });
-
-    if (data.rvsp.limit) {
-      const rvspSpan = document.createElement('span');
-      let limitMinusYes = data.rvsp.limit - data.rvsp.yes;
-
-      if (limitMinusYes < 0) {
-        limitMinusYes = 0;
-      }
-
-      rvspSpan.classList.add('list-item-rvsp');
-      rvspSpan.textContent = `자리가 ${limitMinusYes} 개 남았습니다.`;
-      rvspWrapperDiv.appendChild(rvspSpan);
-    }
-  }
-
   function focusOnItem(ev) {
-    const targetMarker = vanillaMeetup.markerStorage[ev.currentTarget.dataset.id];
+    const targetMarker = vanillaMeetup.markerData[ev.currentTarget.dataset.id];
 
     ev.currentTarget.classList.add('focus');
     vanillaMeetup.map.panTo(targetMarker.getPosition());
@@ -422,7 +433,6 @@ window.onload = function() {
 
     vanillaMeetup.favoriteMeetupData[dataId] = vanillaMeetup.meetupData[dataId];
     localStorage.setItem('favoriteData', JSON.stringify(vanillaMeetup.favoriteMeetupData));
-    console.log(JSON.parse(localStorage.getItem('favoriteData')));
 
     handleNotification('add', dataId);
 
@@ -493,7 +503,7 @@ window.onload = function() {
       content: makeContentForm(data)
     });
 
-    marker.addListener('mouseover', (ev) => {
+    marker.addListener('mouseover', () => {
       infoWindow.open(vanillaMeetup.map, marker);
     });
 
@@ -501,19 +511,19 @@ window.onload = function() {
       infoWindow.close();
     });
 
-    vanillaMeetup.markerStorage[dataId] = marker;
+    vanillaMeetup.markerData[dataId] = marker;
 
     function makeContentForm(contents) {
-      return `<span class="map-marker-title">${contents.title}</span>`;
+      return `<span>${contents.title}</span>`;
     }
   }
 
   function removeMarker() {
-    Object.keys(vanillaMeetup.markerStorage).forEach((dataId) => {
-      vanillaMeetup.markerStorage[dataId].setMap(null);
+    Object.keys(vanillaMeetup.markerData).forEach((dataId) => {
+      vanillaMeetup.markerData[dataId].setMap(null);
     });
 
-    vanillaMeetup.markerStorage = {};
+    vanillaMeetup.markerData = {};
   }
 
   function removeList() {
