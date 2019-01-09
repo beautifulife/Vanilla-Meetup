@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width">
     <title><%= htmlWebpackPlugin.options.title %></title>
-    <link href="https://fonts.googleapis.com/css?family=Lato|Gugi" rel="stylesheet">
-    <!-- <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuo1JkXZUrlRrIsZoGUdmZyjLsJBiwmCU&"></script> -->
+    <link href="https://fonts.googleapis.com/css?family=Lato|Gugi|Nanum+Brush+Script" rel="stylesheet">
     <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuo1JkXZUrlRrIsZoGUdmZyjLsJBiwmCU&language=kor&libraries=places">
     </script>
@@ -19,7 +18,7 @@
                 <span class="header-notification">
                     <span>알림</span>
                     <span class="notification-icon hidden"></span>
-                    <!-- <span class="notification-layer"></span> -->
+                    <span class="notification-layer"></span>
                 </span>
                 <span class="header-favorite">
                     <i class="fas fa-star"></i>
@@ -54,13 +53,21 @@
                             <label for='btn-search-order-time'>시간순</label>
                         </div>
                     </div>
+                    <div class="search-category-wrapper">
+                        <span class="search-category-title">모임 종류 :</span>
+                        <span class="btn-search-category">
+                            <span>전체 모임</span>
+                            <ul class="search-category-layer hidden">
+                                <li class="search-category-item" style="color: #F64060; font-weight: bold" data-id="null">전체 모임</li>
+                            </ul>
+                        </span>
+                    </div>
                 </div>
                 <div class="list-content-layer">
                     <ul class="list-content-wrapper">
                         <div>검색된 모임이 없습니다.<br>모임을 검색하거나, 지도를 클릭해주세요</div>
                     </ul>
                 </div>
-                <!-- <img class="btn-nav-main-toggle" src="/assets/images/btn_nav_main.png"> -->
             </section>
             <section class="section-map">
                 <div id="map-main"></div>

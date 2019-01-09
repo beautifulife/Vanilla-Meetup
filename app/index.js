@@ -18,12 +18,14 @@ window.onload = function initApplication() {
   const $searchRadiusSlider = document.getElementById('search-radius-slider');
   const $searchOrderBest = document.getElementById('btn-search-order-best');
   const $searchOrderTime = document.getElementById('btn-search-order-time');
+  const $searchCategoryButton = document.getElementsByClassName('btn-search-category')[0];
   const $listContentLayer = document.getElementsByClassName('list-content-layer')[0];
   let $listContentWrapper = document.getElementsByClassName('list-content-wrapper')[0];
   const vanillaMeetup = {
     map: null,
     markerStorage: {},
     meetupData: {},
+    categoryData: {},
     isDone: true,
     centerPosition: { lat: 37.503219, lon: 127.022119 },
     favoriteMeetupData: localStorage.getItem('favoriteData') ? JSON.parse(localStorage.getItem('favoriteData')) : {},
@@ -40,7 +42,7 @@ window.onload = function initApplication() {
       radius: 3,
       order: 'best',
       text: '',
-      topic_category: 1,
+      category: null,
     },
   };
 
@@ -50,6 +52,10 @@ window.onload = function initApplication() {
   $searchMeetupBox.addEventListener('keydown', setMeetupTextValue);
   $searchRadiusSlider.addEventListener('change', setRadiusValue);
   $searchRadiusSlider.addEventListener('input', changeRadiusView);
+  $searchCategoryButton.addEventListener('click', getCategoryData);
+  $searchCategoryButton.addEventListener('click', (ev) => {
+    ev.currentTarget.lastElementChild.classList.toggle('hidden');
+  });
   [$searchOrderBest, $searchOrderTime].forEach(button => button.addEventListener('input', setOrderValue));
 
   function setMeetupTextValue(ev) {
@@ -129,6 +135,7 @@ window.onload = function initApplication() {
   function showFavoriteList(ev) {
     if (Object.keys(vanillaMeetup.favoriteMeetupData).length) {
       $listContentLayer.classList.add('active');
+      ev.currentTarget.classList.add('active');
       renderData(vanillaMeetup.favoriteMeetupData);
     } else {
       alert('등록된 관심 모임이 없습니다.');
@@ -151,12 +158,52 @@ window.onload = function initApplication() {
     $listContentLayer.classList.toggle('active');
   }
 
+  function getCategoryData() {
+    if (!Object.keys(vanillaMeetup.categoryData).length) {
+      const url = `https://api.meetup.com/find/topic_categories?key=${vanillaMeetup.getApiKey()}&photo-host=public`;
+
+      makeAjaxPromise(url)
+        .then((categoryData) => {
+          console.log('카테고리', categoryData);
+          categoryData.forEach((data) => {
+            vanillaMeetup.categoryData[data.id] = data.name;
+          });
+          renderCategory();
+        })
+        .catch((err) => {
+          console.error(err.message);
+        });
+    }
+
+    function renderCategory() {
+      const searchCategoryLayer = document.getElementsByClassName('search-category-layer')[0];
+
+      Object.keys(vanillaMeetup.categoryData).forEach((dataKey) => {
+        const categoryItem = document.createElement('li');
+
+        categoryItem.classList.add('search-category-item');
+        categoryItem.dataset.id = dataKey;
+        console.log(categoryItem.dataset.id);
+        categoryItem.textContent = vanillaMeetup.categoryData[dataKey];
+        searchCategoryLayer.appendChild(categoryItem);
+      });
+
+      searchCategoryLayer.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        ev.target.classList.contains('search-category-item');
+        ev.currentTarget.classList.add('hidden');
+        $searchCategoryButton.firstElementChild.textContent = ev.target.textContent;
+        vanillaMeetup.advanceSearch.category = ev.target.dataset.id;
+      });
+    }
+  }
+
   function searchAndGetData() {
     const url = [
       `https://api.meetup.com/find/upcoming_events?key=${vanillaMeetup.getApiKey()}`,
       `&page=10&lat=${vanillaMeetup.centerPosition.lat}&lon=${vanillaMeetup.centerPosition.lon}`,
       `&radius=${vanillaMeetup.advanceSearch.radius}&order=${vanillaMeetup.advanceSearch.order}`,
-      `&text=${vanillaMeetup.advanceSearch.text}&fields=event_hosts`,
+      `&text=${vanillaMeetup.advanceSearch.text}&topic_category=${vanillaMeetup.advanceSearch.category}&fields=event_hosts`,
     ].join('');
 
     $listContentLayer.classList.add('active');
@@ -277,7 +324,17 @@ window.onload = function initApplication() {
       addFavoriteSpan.innerHTML = '<i class="fas fa-plus"></i>';
       addFavoriteSpan.addEventListener('click', addFavorite);
     }
-
+    photoWrapperDiv.addEventListener('mouseover', (ev) => {
+      if (ev.target.classList.contains('list-item-photo')) {
+        ev.target.firstElementChild.classList.remove('hidden');
+      }
+    });
+    photoWrapperDiv.addEventListener('mouseout', (ev) => {
+      if (ev.target.classList.contains('list-item-photo')) {
+        ev.target.firstElementChild.classList.add('hidden');
+      }
+    });
+  
     contentList.addEventListener('mouseover', focusOnItem);
     contentList.addEventListener('mouseout', unfocusItem);
     
@@ -290,9 +347,13 @@ window.onload = function initApplication() {
     contentList.appendChild(photoWrapperDiv);
     contentList.appendChild(rvspWrapperDiv);
     contentList.appendChild(addFavoriteSpan);
-    data.hostThumbnail.forEach((item) => {
+    data.hostThumbnail.forEach((item, index) => {
       const photoDiv = document.createElement('div');
+      const hostNameSpan = document.createElement('span');
 
+      hostNameSpan.textContent = data.hostName[index];
+      hostNameSpan.classList.add('list-item-hostname', 'hidden');
+      photoDiv.appendChild(hostNameSpan);
       photoDiv.classList.add('list-item-photo');
       photoDiv.style.backgroundImage = `url('${item}')`;
       photoWrapperDiv.appendChild(photoDiv);
@@ -350,10 +411,14 @@ window.onload = function initApplication() {
     const savedCurrentTarget = ev.currentTarget;
     const dataId = savedCurrentTarget.parentNode.dataset.id;
     const addFavoriteSpan = document.createElement('span');
+    let isFavoriteActive = false;
 
     delete vanillaMeetup.favoriteMeetupData[dataId];
     localStorage.setItem('favoriteData', JSON.stringify(vanillaMeetup.favoriteMeetupData));
-    console.log(JSON.parse(localStorage.getItem('favoriteData')));
+
+    if ($favoriteButton.classList.contains('active')) {
+      isFavoriteActive = true;
+    }
 
     ev.currentTarget.classList.add('active');
     addFavoriteSpan.classList.add('btn-add-favorite');
@@ -363,8 +428,12 @@ window.onload = function initApplication() {
     handleNotification('remove', dataId);
 
     setTimeout(() => {
-      savedCurrentTarget.parentNode.appendChild(addFavoriteSpan);
-      savedCurrentTarget.remove();
+      if (isFavoriteActive) {
+        savedCurrentTarget.parentNode.remove();
+      } else {
+        savedCurrentTarget.parentNode.appendChild(addFavoriteSpan);
+        savedCurrentTarget.remove();
+      }
     }, 500);
   }
 

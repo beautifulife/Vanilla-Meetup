@@ -27,6 +27,24 @@ input, ul, a {
     all: unset;
 }
 
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    border-color:transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background-color: rgba(0, 0, 0, 0.2);
+    -webkit-box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.3);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
 header {
     display: flex;
     align-items: center;
@@ -102,6 +120,7 @@ header h1 span {
 }
 
 .hidden{
+    display: hidden;
     opacity: 0;
     transform: scale(0);
 }
@@ -143,10 +162,12 @@ header h1 span {
 
 .search-nav {
     height: calc(100% - 80px);
+    padding-top: 15px;
 }
 
 .search-map-box-wrapper, .search-radius-wrapper,
-.search-order-wrapper, .search-meetup-box-wrapper {
+.search-order-wrapper, .search-meetup-box-wrapper,
+.search-category-wrapper {
     display: flex;
     align-items: center;
     height: 50px;
@@ -171,7 +192,8 @@ header h1 span {
     margin-left: 30px;
 }
 
-.search-radius-title, .search-order-title {
+.search-radius-title, .search-order-title,
+.search-category-title {
     margin-left: 33px;
     font-size: 14px;
     color: rgba(0, 0, 0, 0.6);
@@ -190,7 +212,7 @@ header h1 span {
     width: 15px;
     height: 15px;
     border-radius: 50%;
-    background: #e06161;
+    background: #F64060;
     transition: all .1s ease-in-out;
 }
 
@@ -211,16 +233,16 @@ header h1 span {
     position: absolute;
     top: 8px;
     left: -5px;
-    border-top: 5px solid transparent;
-    border-right: 5px solid rgba(0, 0, 0, 0.7);
-    border-bottom: 5px solid transparent;
+    border-style: solid;
+    border-width: 5px 5px 5px 0px;
+    border-color: transparent rgba(0, 0, 0, 0.7) transparent;
     content: '';
 }
 
 .btn-search-order-wrapper > label{
     display: inline-block;
     color: rgba(0, 0, 0, 0.6);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: normal;
     text-align: center;
     padding: 6px 40px;
@@ -243,6 +265,76 @@ header h1 span {
     border-radius: 0 5px 5px 0;
 }
 
+.btn-search-category {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 200px;
+    height: 30px;
+    margin-left: 30px;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+
+.search-category-layer {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    position: absolute;
+    top: 45px;
+    left: -100px;
+    z-index: 1;
+    height: 150px;
+    width: 460px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: white;
+    box-shadow: 0 4px 10px 3px rgba(0, 0, 0, 0.2);
+    list-style: none;
+    transition: all 0.2s ease;
+}
+
+.search-category-layer.hidden {
+    left: -150px;
+    top: -50px;
+}
+
+.search-category-layer:before {
+    position: absolute;
+    top: -10px;
+    left: 190px;
+    border-style: solid;
+    border-width: 0px 10px 10px;
+    border-color: transparent transparent rgb(240, 240, 240);
+    content: '';
+}
+
+.search-category-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 90px;
+    height: 30px;
+    font-size: 12px;
+}
+
+.search-category-item:hover {
+    color: white !important;
+    background-color: #F64060;
+}
+
+.phrase-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 170px;
+}
+
 .section-map {
     flex: 1;
     position: relative;
@@ -262,24 +354,6 @@ header h1 span {
     text-align: center;
     transition: left 0.3s ease-out, border 0.7s ease-in;
     overflow: scroll;
-}
-
-::-webkit-scrollbar {
-    width: 4px;
-}
-
-::-webkit-scrollbar-track {
-    border-color:transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    border-radius: 3px;
-    background-color: rgba(0, 0, 0, 0.2);
-    -webkit-box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.3);
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0, 0, 0, 0.5);
 }
 
 .list-content-layer.active {
@@ -330,18 +404,33 @@ header h1 span {
 }
 
 .list-item-photo-wrapper {
-
+    position: relative;
 }
 
 .list-item-photo {
     display: inline-block;
-    width: 25px;
-    height: 25px;
-    margin:5px;
+    width: 32px;
+    height: 32px;
+    margin: 2px 4px;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
     border-radius: 100%;
+}
+
+.list-item-hostname {
+    display: inline-block;
+    position: absolute;
+    right: 25px;
+    font-family: 'Nanum Brush Script', cursive;
+    font-size: 20px;
+    font-weight: bold;
+    background-color: white;
+    transition: all 0.1s;
+}
+
+.list-item-hostname .hidden {
+    opacity: 0;
 }
 
 .list-item-rvsp-wrapper > span {
