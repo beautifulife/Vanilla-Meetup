@@ -8,7 +8,8 @@ import 'styles/index.less';
 // You can use jquery for ajax request purpose only.
 import $ from 'jquery';
 
-window.onload = function initApplication() {
+window.onload = function() {
+  const $startSessionButton = document.getElementsByClassName('btn-start-session')[0];
   const $favoriteButton = document.getElementsByClassName('header-favorite')[0];
   const $notificationButton = document.getElementsByClassName('header-notification')[0];
   const $notificationIcon = document.getElementsByClassName('notification-icon')[0];
@@ -37,13 +38,13 @@ window.onload = function initApplication() {
       };
     })(),
     notificationCount: 0,
-    notificationData: [],
+    notificationData: {},
     advanceSearch: {
       radius: 3,
       order: 'best',
       text: '',
-      category: null,
-    },
+      category: ''
+    }
   };
 
   $favoriteButton.addEventListener('click', showFavoriteList);
@@ -53,13 +54,57 @@ window.onload = function initApplication() {
   $searchRadiusSlider.addEventListener('change', setRadiusValue);
   $searchRadiusSlider.addEventListener('input', changeRadiusView);
   $searchCategoryButton.addEventListener('click', getCategoryData);
+  $searchOrderBest.addEventListener('input', setOrderValue);
+  $searchOrderTime.addEventListener('input', setOrderValue);
+
   $searchCategoryButton.addEventListener('click', (ev) => {
     ev.currentTarget.lastElementChild.classList.toggle('hidden');
   });
-  [$searchOrderBest, $searchOrderTime].forEach(button => button.addEventListener('input', setOrderValue));
+
+  $startSessionButton.addEventListener('click', (ev) => {
+    const $introPage = document.getElementsByClassName('intro-page')[0];
+
+    $introPage.style.left = '-100%';
+  });
+
+  initMap();
+
+  function initMap() {
+    const autoComplete = new google.maps.places.Autocomplete($searchMapBox, { types: ['(cities)'] });
+
+    vanillaMeetup.map = new google.maps.Map(document.getElementById('map-main'), {
+      center: { lat: 37.503219, lng: 127.022119 },
+      zoom: 12
+    });
+
+    vanillaMeetup.map.addListener('click', (ev) => {
+      if (vanillaMeetup.isDone) {
+        vanillaMeetup.centerPosition = { lat: ev.latLng.lat(), lon: ev.latLng.lng() };
+        searchAndGetData();
+        vanillaMeetup.map.panTo({ lat: ev.latLng.lat(), lng: ev.latLng.lng() });
+      }
+    });
+
+    autoComplete.addListener('place_changed', (ev) => {
+      const place = autoComplete.getPlace();
+
+      if (place.geometry) {
+        vanillaMeetup.map.panTo(place.geometry.location);
+        vanillaMeetup.map.setZoom(12);
+        vanillaMeetup.centerPosition = {
+          lat: place.geometry.location.lat(),
+          lon: place.geometry.location.lng()
+        };
+        searchAndGetData();
+      } else {
+        $searchMapBox.placeholder = '도시를 선택하세요';
+      }
+    });
+
+    autoComplete.bindTo('bounds', vanillaMeetup.map);
+  }
 
   function setMeetupTextValue(ev) {
-    console.log(ev.currentTarget.value);
     if (ev.keyCode === 13) {
       vanillaMeetup.advanceSearch.text = ev.currentTarget.value;
       searchAndGetData();
@@ -67,7 +112,6 @@ window.onload = function initApplication() {
   }
 
   function setOrderValue(ev) {
-    console.log(ev.currentTarget.value, ev.currentTarget.checked);
     if (ev.currentTarget.value === 'best') {
       $searchOrderTime.checked = false;
     } else {
@@ -95,43 +139,6 @@ window.onload = function initApplication() {
     }
   }
 
-  function initMap() {
-    const autocomplete = new google.maps.places.Autocomplete($searchMapBox, { types: ['(cities)'] });
-    
-    vanillaMeetup.map = new google.maps.Map(document.getElementById('map-main'), {
-      center: {lat: 37.503219, lng: 127.022119},
-      zoom: 12,
-    });
-
-    vanillaMeetup.map.addListener('click', (ev) => {
-      if (vanillaMeetup.isDone) {
-        vanillaMeetup.centerPosition = { lat: ev.latLng.lat(), lon: ev.latLng.lng() };
-        searchAndGetData();
-      }
-    });
-
-    autocomplete.addListener('place_changed', (ev) => {
-      const place = autocomplete.getPlace();
-      console.log(place);
-
-      if (place.geometry) {
-        vanillaMeetup.map.panTo(place.geometry.location);
-        vanillaMeetup.map.setZoom(12);
-        vanillaMeetup.centerPosition = {
-          lat: place.geometry.location.lat(),
-          lon: place.geometry.location.lng(),
-        };
-        searchAndGetData();
-      } else {
-        $searchMapBox.placeholder = '도시를 선택하세요';
-      }
-    });
-
-    autocomplete.bindTo('bounds', vanillaMeetup.map);
-  }
-
-  initMap();
-
   function showFavoriteList(ev) {
     if (Object.keys(vanillaMeetup.favoriteMeetupData).length) {
       $listContentLayer.classList.add('active');
@@ -143,9 +150,30 @@ window.onload = function initApplication() {
   }
 
   function showNotificationList(ev) {
-    console.log(vanillaMeetup.notificationData);
+    if (vanillaMeetup.notificationCount === 0) {
+      return;
+    }
 
-    const notificationLayer = document.createElement;
+    if (!ev.currentTarget.lastElementChild.classList.contains('notification-layer')) {
+      const notificationLayer = document.createElement('ul');
+
+      $notificationButton.appendChild(notificationLayer);
+      notificationLayer.classList.add('notification-layer');
+
+      Object.keys(vanillaMeetup.notificationData).forEach((key) => {
+        const notificationItem =`<li class="notification-item">
+            <span><b>${vanillaMeetup.notificationData[key].action}</b> favorite meetup</span><br>
+            <span>${vanillaMeetup.notificationData[key].title}</span>
+          </li>`;
+
+        notificationLayer.innerHTML += notificationItem;
+      });
+    } else {
+      ev.currentTarget.lastElementChild.remove();
+      vanillaMeetup.notificationData = {};
+      vanillaMeetup.notificationCount = 0;
+      $notificationIcon.classList.add('hidden');
+    }
   }
 
   function toggleSearchAndList(ev) {
@@ -164,10 +192,10 @@ window.onload = function initApplication() {
 
       makeAjaxPromise(url)
         .then((categoryData) => {
-          console.log('카테고리', categoryData);
           categoryData.forEach((data) => {
             vanillaMeetup.categoryData[data.id] = data.name;
           });
+
           renderCategory();
         })
         .catch((err) => {
@@ -178,22 +206,23 @@ window.onload = function initApplication() {
     function renderCategory() {
       const searchCategoryLayer = document.getElementsByClassName('search-category-layer')[0];
 
-      Object.keys(vanillaMeetup.categoryData).forEach((dataKey) => {
+      Object.keys(vanillaMeetup.categoryData).forEach((key) => {
         const categoryItem = document.createElement('li');
 
         categoryItem.classList.add('search-category-item');
-        categoryItem.dataset.id = dataKey;
-        console.log(categoryItem.dataset.id);
-        categoryItem.textContent = vanillaMeetup.categoryData[dataKey];
+        categoryItem.dataset.id = key;
+        categoryItem.textContent = vanillaMeetup.categoryData[key];
         searchCategoryLayer.appendChild(categoryItem);
       });
 
       searchCategoryLayer.addEventListener('click', (ev) => {
         ev.stopPropagation();
-        ev.target.classList.contains('search-category-item');
-        ev.currentTarget.classList.add('hidden');
-        $searchCategoryButton.firstElementChild.textContent = ev.target.textContent;
-        vanillaMeetup.advanceSearch.category = ev.target.dataset.id;
+
+        if (ev.target.classList.contains('search-category-item')) {
+          ev.currentTarget.classList.add('hidden');
+          $searchCategoryButton.firstElementChild.textContent = ev.target.textContent;
+          vanillaMeetup.advanceSearch.category = ev.target.dataset.id;
+        }
       });
     }
   }
@@ -242,7 +271,6 @@ window.onload = function initApplication() {
   }
 
   function cleansData(meetupData) {
-    console.log(meetupData);
     meetupData.forEach((data) => {
       const position = {};
       const hostName = [];
@@ -254,6 +282,7 @@ window.onload = function initApplication() {
         position.lat = data.venue ? data.venue.lat : data.group.lat;
         position.lng = data.venue ? data.venue.lon : data.group.lon;
         data.event_hosts.forEach(item => hostName.push(item.name));
+
         data.event_hosts.forEach((item) => {
           if (item.photo) {
             hostPhoto.push(item.photo.photo_link);
@@ -263,22 +292,20 @@ window.onload = function initApplication() {
             hostThumbnail.push('/assets/images/sub_img.png');
           }
         });
-      } catch(err) {
+
+        vanillaMeetup.meetupData[data.id] = {
+          title: data.name,
+          groupName: data.group.name,
+          position,
+          date,
+          rvsp: { limit: data.rsvp_limit, yes: data.yes_rsvp_count },
+          hostName,
+          hostPhoto,
+          hostThumbnail,
+        };
+      } catch (err) {
         console.error(err);
-
-        return;
       }
-
-      vanillaMeetup.meetupData[data.id] = {
-        title: data.name,
-        groupName: data.group.name,
-        position,
-        date,
-        rvsp: { limit: data.rsvp_limit, yes: data.yes_rsvp_count },
-        hostName,
-        hostPhoto,
-        hostThumbnail,
-      };
     });
   }
 
@@ -288,9 +315,9 @@ window.onload = function initApplication() {
     }
 
     removeList();
-
-    Object.keys(cleansedData).forEach(dataId => makeMarker(cleansedData[dataId], dataId));
     Object.keys(cleansedData).forEach(dataId => makeListItem(cleansedData[dataId], dataId));
+    Object.keys(cleansedData).forEach(dataId => makeMarker(cleansedData[dataId], dataId));
+    vanillaMeetup.isDone = true;
   }
 
   function makeListItem(data, dataId) {
@@ -324,17 +351,19 @@ window.onload = function initApplication() {
       addFavoriteSpan.innerHTML = '<i class="fas fa-plus"></i>';
       addFavoriteSpan.addEventListener('click', addFavorite);
     }
+
     photoWrapperDiv.addEventListener('mouseover', (ev) => {
       if (ev.target.classList.contains('list-item-photo')) {
         ev.target.firstElementChild.classList.remove('hidden');
       }
     });
+
     photoWrapperDiv.addEventListener('mouseout', (ev) => {
       if (ev.target.classList.contains('list-item-photo')) {
         ev.target.firstElementChild.classList.add('hidden');
       }
     });
-  
+
     contentList.addEventListener('mouseover', focusOnItem);
     contentList.addEventListener('mouseout', unfocusItem);
     
@@ -347,6 +376,8 @@ window.onload = function initApplication() {
     contentList.appendChild(photoWrapperDiv);
     contentList.appendChild(rvspWrapperDiv);
     contentList.appendChild(addFavoriteSpan);
+    rvspWrapperDiv.appendChild(rvspYesSpan);
+
     data.hostThumbnail.forEach((item, index) => {
       const photoDiv = document.createElement('div');
       const hostNameSpan = document.createElement('span');
@@ -358,7 +389,6 @@ window.onload = function initApplication() {
       photoDiv.style.backgroundImage = `url('${item}')`;
       photoWrapperDiv.appendChild(photoDiv);
     });
-    rvspWrapperDiv.appendChild(rvspYesSpan);
 
     if (data.rvsp.limit) {
       const rvspSpan = document.createElement('span');
@@ -394,12 +424,12 @@ window.onload = function initApplication() {
     localStorage.setItem('favoriteData', JSON.stringify(vanillaMeetup.favoriteMeetupData));
     console.log(JSON.parse(localStorage.getItem('favoriteData')));
 
+    handleNotification('add', dataId);
+
     ev.currentTarget.classList.add('active');
     removeFavoriteSpan.classList.add('btn-remove-favorite');
     removeFavoriteSpan.innerHTML = '<i class="fas fa-star"></i>';
     removeFavoriteSpan.addEventListener('click', removeFavorite);
-
-    handleNotification('add', dataId);
 
     setTimeout(() => {
       savedCurrentTarget.parentNode.appendChild(removeFavoriteSpan);
@@ -413,6 +443,8 @@ window.onload = function initApplication() {
     const addFavoriteSpan = document.createElement('span');
     let isFavoriteActive = false;
 
+    handleNotification('remove', dataId);
+
     delete vanillaMeetup.favoriteMeetupData[dataId];
     localStorage.setItem('favoriteData', JSON.stringify(vanillaMeetup.favoriteMeetupData));
 
@@ -424,8 +456,6 @@ window.onload = function initApplication() {
     addFavoriteSpan.classList.add('btn-add-favorite');
     addFavoriteSpan.innerHTML = '<i class="fas fa-plus"></i>';
     addFavoriteSpan.addEventListener('click', addFavorite);
-
-    handleNotification('remove', dataId);
 
     setTimeout(() => {
       if (isFavoriteActive) {
@@ -446,21 +476,27 @@ window.onload = function initApplication() {
       $notificationIcon.classList.add('hidden');
     }
 
-    vanillaMeetup.notificationData.push({ [dataId]: action });
+    vanillaMeetup.notificationData[dataId] = {
+      action,
+      title: vanillaMeetup.favoriteMeetupData[dataId].title
+    };
   }
 
   function makeMarker(data, dataId) {
     const marker = new google.maps.Marker({
       position: data.position,
       map: vanillaMeetup.map,
-    });
-    const infoWindow = new google.maps.InfoWindow({
-      content: makeContentForm(data),
+      animation: google.maps.Animation.DROP
     });
 
-    marker.addListener('mouseover', () => {
+    const infoWindow = new google.maps.InfoWindow({
+      content: makeContentForm(data)
+    });
+
+    marker.addListener('mouseover', (ev) => {
       infoWindow.open(vanillaMeetup.map, marker);
     });
+
     marker.addListener('mouseout', () => {
       infoWindow.close();
     });
@@ -468,12 +504,15 @@ window.onload = function initApplication() {
     vanillaMeetup.markerStorage[dataId] = marker;
 
     function makeContentForm(contents) {
-      return `<h3>${contents.title}</h3>`;
+      return `<span class="map-marker-title">${contents.title}</span>`;
     }
   }
 
   function removeMarker() {
-    Object.keys(vanillaMeetup.markerStorage).forEach(dataId => vanillaMeetup.markerStorage[dataId].setMap(null));
+    Object.keys(vanillaMeetup.markerStorage).forEach((dataId) => {
+      vanillaMeetup.markerStorage[dataId].setMap(null);
+    });
+
     vanillaMeetup.markerStorage = {};
   }
 

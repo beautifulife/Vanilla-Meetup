@@ -15,10 +15,6 @@ html, body {
     font-weight: inherit;
 }
 
-.content {
-    height: 100%;
-}
-
 h1, p {
     margin: 0;
 }
@@ -38,6 +34,7 @@ input, ul, a {
 ::-webkit-scrollbar-thumb {
     border-radius: 3px;
     background-color: rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.3);
     -webkit-box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -45,9 +42,66 @@ input, ul, a {
     background-color: rgba(0, 0, 0, 0.5);
 }
 
+.hidden {
+    display: hidden;
+    opacity: 0;
+    transform: scale(0);
+}
+
+.content {
+    position: relative;
+    height: 100%;
+}
+
+.intro-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    background-image: url(/assets/images/intro_img.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    transition: left 0.7s;
+}
+
+.intro-background-layer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    transition: background-color 2s;
+}
+
+.intro-title {
+    margin: 50px 0;
+    font-family: 'Nanum Brush Script', cursive;
+    font-size: 80px;
+    color: white;
+    transition: color 2s;
+}
+
+.btn-start-session {
+    margin: 50px 0;
+    padding: 15px 30px;
+    border-bottom: 5px solid rgb(161, 39, 62);
+    border-radius: 10px;
+    color:white;
+    text-shadow: 0px -1px rgba(0, 0, 0, 0.4);
+    background-color: #F64060;
+    cursor: pointer;
+}
+
 header {
     display: flex;
     align-items: center;
+    position: relative;
+    z-index: 2;
     height: 70px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 }
@@ -56,7 +110,7 @@ header h1 {
     margin-left: 35px;
     font-family: 'Gugi', cursive;
     font-size: 22px;
-    font-weight: bold;
+    font-weight: 700;
     letter-spacing: 2px;
     cursor: pointer;
 }
@@ -79,18 +133,16 @@ header h1 span {
     height: 40px;
     margin-right: 15px;
     text-align: center;
-    cursor: pointer;
 }
 
-.header-favorite{
-    font-size: 30px;
-    color: #F64060;
-}
-
-.header-notification{
+.header-notification {
     position: relative;
     font-size: 14px;
     line-height: 43px;
+}
+
+.header-notification > span {
+    cursor: pointer;
 }
 
 .notification-icon {
@@ -108,21 +160,60 @@ header h1 span {
 }
 
 .notification-layer {
+    display: flex;
+    flex-direction: column;
+    overflow: scroll;
     position: absolute;
-    top: 30px;;
-    right: 30px;
-    width: 400px;
-    height: 200px;
+    top: 45px;;
+    right: 0px;
+    z-index: 3;
+    width: 300px;
+    max-height: 300px;
+    padding: 5px 20px;
     border-radius: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.3);
     background-color: white;
-    z-index: 1;
+    box-shadow: 0 4px 10px 3px rgba(0, 0, 0, 0.2);
+    line-height: 17px;
+    list-style: none;
+    transition: all 0.2s ease;
 }
 
-.hidden{
-    display: hidden;
-    opacity: 0;
-    transform: scale(0);
+.notification-layer:before{
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    border-style: solid;
+    border-width: 0px 10px 10px;
+    border-color: transparent transparent rgb(240, 240, 240);
+    content: '';
+}
+
+.notification-item {
+    padding: 5px 0px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    text-align: left;
+}
+
+.notification-item > span:first-of-type {
+    display: inline-block;
+    margin-bottom: 3px;
+    font-size: 12px;
+    font-weight: bold;
+    color: rgba(0, 0, 0, 0.9);
+}
+
+.notification-item:last-of-type {
+    border-bottom: none;
+}
+
+.notification-item > span > b {
+    color: rgb(199, 0, 0);
+}
+
+.header-favorite {
+    font-size: 30px;
+    color: #F64060;
+    cursor: pointer;
 }
 
 .main-content {
@@ -175,7 +266,7 @@ header h1 span {
 }
 
 #search-map-box, #search-meetup-box {
-    width: 270px;
+    width: 250px;
     margin: 0 auto;
     padding: 5px 10px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.3);
@@ -188,7 +279,7 @@ header h1 span {
     box-shadow: 0 1px #007CB7;
 }
 
-.btn-search-order-wrapper {
+.search-order-btn-wrapper {
     margin-left: 30px;
 }
 
@@ -207,13 +298,14 @@ header h1 span {
     background: rgba(0, 0, 0, 0.2);
 }
 
-#search-radius-slider::-webkit-slider-thumb:active, #search-radius-slider::-webkit-slider-thumb:hover {
+#search-radius-slider::-webkit-slider-thumb:active,
+#search-radius-slider::-webkit-slider-thumb:hover {
     -webkit-appearance: none;
     width: 15px;
     height: 15px;
     border-radius: 50%;
     background: #F64060;
-    transition: all .1s ease-in-out;
+    transition: all 0.1s;
 }
 
 .search-radius-value {
@@ -229,7 +321,7 @@ header h1 span {
     color: white;
 }
 
-.search-radius-value:after {
+.search-radius-value:before {
     position: absolute;
     top: 8px;
     left: -5px;
@@ -239,29 +331,28 @@ header h1 span {
     content: '';
 }
 
-.btn-search-order-wrapper > label{
-    display: inline-block;
-    color: rgba(0, 0, 0, 0.6);
-    font-size: 13px;
-    font-weight: normal;
+.search-order-btn-wrapper > label {
     text-align: center;
     padding: 6px 40px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    font-size: 13px;
+    font-weight: 400;
+    color: rgba(0, 0, 0, 0.6);
     float: left;
     cursor: pointer;
 }
 
-.btn-search-order-wrapper > input:checked + label {
+.search-order-btn-wrapper > input:checked + label {
     color: white;
     background-color: #F64060;
 }
 
-.btn-search-order-wrapper > label:first-of-type {
+.search-order-btn-wrapper > label:first-of-type {
     border-right: none;
     border-radius: 5px 0 0 5px;
 }
 
-.btn-search-order-wrapper > label:last-of-type {
+.search-order-btn-wrapper > label:last-of-type {
     border-radius: 0 5px 5px 0;
 }
 
@@ -289,7 +380,7 @@ header h1 span {
     left: -100px;
     z-index: 1;
     height: 150px;
-    width: 460px;
+    min-width: 460px;
     padding: 10px;
     border-radius: 5px;
     background-color: white;
@@ -327,14 +418,6 @@ header h1 span {
     background-color: #F64060;
 }
 
-.phrase-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 170px;
-}
-
 .section-map {
     flex: 1;
     position: relative;
@@ -348,12 +431,12 @@ header h1 span {
     position: absolute;
     bottom: 0;
     left: -400px;
+    overflow: scroll;
     width: 100%;
     height: calc(100% - 80px);
-    background-color: white;
     text-align: center;
+    background-color: white;
     transition: left 0.3s ease-out, border 0.7s ease-in;
-    overflow: scroll;
 }
 
 .list-content-layer.active {
@@ -383,6 +466,10 @@ header h1 span {
     text-align: left;
 }
 
+.list-content:last-of-type {
+    border-bottom: none;
+}
+
 .list-content.focus {
     box-shadow: 0 3px #F64060;
 }
@@ -396,10 +483,10 @@ header h1 span {
 }
 
 .list-item-group {
-    font-size: 12px;
+    font-size: 13px;
 }
 
-.list-item-time {
+.list-item-time, .list-item-rvsp-wrapper > span {
     font-size: 12px;
 }
 
@@ -424,17 +511,9 @@ header h1 span {
     right: 25px;
     font-family: 'Nanum Brush Script', cursive;
     font-size: 20px;
-    font-weight: bold;
+    font-weight: 700;
     background-color: white;
     transition: all 0.1s;
-}
-
-.list-item-hostname .hidden {
-    opacity: 0;
-}
-
-.list-item-rvsp-wrapper > span {
-    font-size: 12px;
 }
 
 .list-item-rvsp {
@@ -444,22 +523,22 @@ header h1 span {
 
 .btn-add-favorite {
     position: absolute;
-    right: -15px;
     top: calc(50% - 15px);
+    right: -15px;
     font-size: 20px;
     color: Tomato;
-    cursor: pointer;
     transition: all 0.5s ease;
+    cursor: pointer;
 }
 
 .btn-remove-favorite {
     position: absolute;
-    right: -18px;
     top: calc(50% - 70px);
+    right: -18px;
     font-size: 20px;
     color: #F64060;
-    cursor: pointer;
     transition: all 0.5s ease;
+    cursor: pointer;
 }
 
 .btn-add-favorite.active {
@@ -471,10 +550,10 @@ header h1 span {
 }
 
 footer {
-    flex-basis: 29px;
+    flex-basis: 30px;
+    text-align: center;
     border-top: 1px solid rgba(0, 0, 0, 0.2);
     font-size: 12px;
-    text-align: center;
     line-height: 29px;
     letter-spacing: 0.5px;
 }
