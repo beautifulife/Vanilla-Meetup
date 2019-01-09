@@ -12,14 +12,17 @@ window.onload = function initApplication() {
   const $favoriteButton = document.getElementsByClassName('header-favorite')[0];
   const $notificationButton = document.getElementsByClassName('header-notification')[0];
   const $notificationIcon = document.getElementsByClassName('notification-icon')[0];
-  const $searchSection = document.getElementsByClassName('section-search')[0];
-  const $searchBox = document.getElementById('search-box');
   const $searchToggle = document.getElementsByClassName('btn-search-toggle')[0];
+  const $searchMapBox = document.getElementById('search-map-box');
+  const $searchMeetupBox = document.getElementById('search-meetup-box');
+  const $searchRadiusSlider = document.getElementById('search-radius-slider');
+  const $searchOrderBest = document.getElementById('btn-search-order-best');
+  const $searchOrderTime = document.getElementById('btn-search-order-time');
   const $listContentLayer = document.getElementsByClassName('list-content-layer')[0];
   let $listContentWrapper = document.getElementsByClassName('list-content-wrapper')[0];
   const vanillaMeetup = {
-    map: undefined,
-    markerStorage: [],
+    map: null,
+    markerStorage: {},
     meetupData: {},
     isDone: true,
     centerPosition: { lat: 37.503219, lon: 127.022119 },
@@ -33,14 +36,61 @@ window.onload = function initApplication() {
     })(),
     notificationCount: 0,
     notificationData: [],
+    advanceSearch: {
+      radius: 3,
+      order: 'best',
+      text: '',
+      topic_category: 1,
+    },
   };
 
   $favoriteButton.addEventListener('click', showFavoriteList);
   $notificationButton.addEventListener('click', showNotificationList);
   $searchToggle.addEventListener('click', toggleSearchAndList);
+  $searchMeetupBox.addEventListener('keydown', setMeetupTextValue);
+  $searchRadiusSlider.addEventListener('change', setRadiusValue);
+  $searchRadiusSlider.addEventListener('input', changeRadiusView);
+  [$searchOrderBest, $searchOrderTime].forEach(button => button.addEventListener('input', setOrderValue));
+
+  function setMeetupTextValue(ev) {
+    console.log(ev.currentTarget.value);
+    if (ev.keyCode === 13) {
+      vanillaMeetup.advanceSearch.text = ev.currentTarget.value;
+      searchAndGetData();
+    }
+  }
+
+  function setOrderValue(ev) {
+    console.log(ev.currentTarget.value, ev.currentTarget.checked);
+    if (ev.currentTarget.value === 'best') {
+      $searchOrderTime.checked = false;
+    } else {
+      $searchOrderBest.checked = false;
+    }
+
+    vanillaMeetup.advanceSearch.order = ev.currentTarget.value;
+  }
+
+  function setRadiusValue(ev) {
+    if (ev.currentTarget.value > 160) {
+      vanillaMeetup.advanceSearch.radius = 'Infinity';
+    } else {
+      const radiusMile = Math.floor(Number(ev.currentTarget.value) / 1.609);
+
+      vanillaMeetup.advanceSearch.radius = radiusMile;
+    }
+  }
+
+  function changeRadiusView(ev) {
+    if (ev.currentTarget.value > 160) {
+      ev.currentTarget.nextElementSibling.textContent = '모든거리';
+    } else {
+      ev.currentTarget.nextElementSibling.textContent = `${ev.currentTarget.value} km`;
+    }
+  }
 
   function initMap() {
-    const autocomplete = new google.maps.places.Autocomplete($searchBox, { types: ['(cities)'] });
+    const autocomplete = new google.maps.places.Autocomplete($searchMapBox, { types: ['(cities)'] });
     
     vanillaMeetup.map = new google.maps.Map(document.getElementById('map-main'), {
       center: {lat: 37.503219, lng: 127.022119},
@@ -50,9 +100,7 @@ window.onload = function initApplication() {
     vanillaMeetup.map.addListener('click', (ev) => {
       if (vanillaMeetup.isDone) {
         vanillaMeetup.centerPosition = { lat: ev.latLng.lat(), lon: ev.latLng.lng() };
-
-        searchAndCleansData();
-        $listContentLayer.classList.add('active');
+        searchAndGetData();
       }
     });
 
@@ -63,30 +111,27 @@ window.onload = function initApplication() {
       if (place.geometry) {
         vanillaMeetup.map.panTo(place.geometry.location);
         vanillaMeetup.map.setZoom(12);
-
         vanillaMeetup.centerPosition = {
           lat: place.geometry.location.lat(),
           lon: place.geometry.location.lng(),
         };
-
-        searchAndCleansData();
-        $listContentLayer.classList.add('active');
+        searchAndGetData();
       } else {
-        $searchBox.placeholder = '도시를 선택하세요';
+        $searchMapBox.placeholder = '도시를 선택하세요';
       }
     });
 
     autocomplete.bindTo('bounds', vanillaMeetup.map);
-    // map.panTo(marker.getPosition())
   }
 
   initMap();
 
   function showFavoriteList(ev) {
-    $listContentLayer.classList.add('active');
-    
     if (Object.keys(vanillaMeetup.favoriteMeetupData).length) {
+      $listContentLayer.classList.add('active');
       renderData(vanillaMeetup.favoriteMeetupData);
+    } else {
+      alert('등록된 관심 모임이 없습니다.');
     }
   }
 
@@ -106,14 +151,17 @@ window.onload = function initApplication() {
     $listContentLayer.classList.toggle('active');
   }
 
-  function searchAndCleansData(ev) {
-    console.log(vanillaMeetup.centerPosition);
-
+  function searchAndGetData() {
     const url = [
       `https://api.meetup.com/find/upcoming_events?key=${vanillaMeetup.getApiKey()}`,
       `&page=10&lat=${vanillaMeetup.centerPosition.lat}&lon=${vanillaMeetup.centerPosition.lon}`,
-      `&fields=event_hosts`
-    ].join(' ');
+      `&radius=${vanillaMeetup.advanceSearch.radius}&order=${vanillaMeetup.advanceSearch.order}`,
+      `&text=${vanillaMeetup.advanceSearch.text}&fields=event_hosts`,
+    ].join('');
+
+    $listContentLayer.classList.add('active');
+    $listContentLayer.firstElementChild.classList.add('hidden');
+    console.log(url, vanillaMeetup.centerPosition);
 
     makeAjaxPromise(url)
       .then((meetupData) => {
@@ -123,7 +171,7 @@ window.onload = function initApplication() {
         renderData(vanillaMeetup.meetupData);
       })
       .catch((err) => {
-        console.log('실패', err);
+        console.error(err.message);
       });
   }
 
@@ -133,7 +181,11 @@ window.onload = function initApplication() {
         url,
         dataType: 'jsonp',
         success: (responsedData) => {
-          resolve(responsedData.data);
+          if (responsedData.data.errors) {
+            reject(responsedData.data.errors[0]);
+          } else {
+            resolve(responsedData.data);
+          }
         },
         error: (err) => {
           reject(err);
@@ -151,18 +203,24 @@ window.onload = function initApplication() {
       const hostThumbnail = [];
       const date = data.local_date + '  ' + data.local_time;
 
-      position.lat = data.venue ? data.venue.lat : data.group.lat;
-      position.lng = data.venue ? data.venue.lon : data.group.lon;
-      data.event_hosts.forEach(item => hostName.push(item.name));
-      data.event_hosts.forEach((item) => {
-        if (item.photo) {
-          hostPhoto.push(item.photo.photo_link);
-          hostThumbnail.push(item.photo.thumb_link);
-        } else {
-          hostPhoto.push('/assets/images/sub_img.png');
-          hostThumbnail.push('/assets/images/sub_img.png');
-        }
-      });
+      try {
+        position.lat = data.venue ? data.venue.lat : data.group.lat;
+        position.lng = data.venue ? data.venue.lon : data.group.lon;
+        data.event_hosts.forEach(item => hostName.push(item.name));
+        data.event_hosts.forEach((item) => {
+          if (item.photo) {
+            hostPhoto.push(item.photo.photo_link);
+            hostThumbnail.push(item.photo.thumb_link);
+          } else {
+            hostPhoto.push('/assets/images/sub_img.png');
+            hostThumbnail.push('/assets/images/sub_img.png');
+          }
+        });
+      } catch(err) {
+        console.error(err);
+
+        return;
+      }
 
       vanillaMeetup.meetupData[data.id] = {
         title: data.name,
@@ -178,14 +236,14 @@ window.onload = function initApplication() {
   }
 
   function renderData(cleansedData) {
-    if (vanillaMeetup.markerStorage.length) {
+    if (Object.keys(vanillaMeetup.markerStorage).length) {
       removeMarker();
     }
 
     removeList();
 
-    Object.keys(cleansedData).forEach(data => makeMarker(cleansedData[data]));
-    Object.keys(cleansedData).forEach(data => makeListItem(cleansedData[data], data));
+    Object.keys(cleansedData).forEach(dataId => makeMarker(cleansedData[dataId], dataId));
+    Object.keys(cleansedData).forEach(dataId => makeListItem(cleansedData[dataId], dataId));
   }
 
   function makeListItem(data, dataId) {
@@ -219,6 +277,9 @@ window.onload = function initApplication() {
       addFavoriteSpan.innerHTML = '<i class="fas fa-plus"></i>';
       addFavoriteSpan.addEventListener('click', addFavorite);
     }
+
+    contentList.addEventListener('mouseover', focusOnItem);
+    contentList.addEventListener('mouseout', unfocusItem);
     
     contentList.dataset.id = dataId;
 
@@ -250,6 +311,17 @@ window.onload = function initApplication() {
       rvspSpan.textContent = `자리가 ${limitMinusYes} 개 남았습니다.`;
       rvspWrapperDiv.appendChild(rvspSpan);
     }
+  }
+
+  function focusOnItem(ev) {
+    const targetMarker = vanillaMeetup.markerStorage[ev.currentTarget.dataset.id];
+
+    ev.currentTarget.classList.add('focus');
+    vanillaMeetup.map.panTo(targetMarker.getPosition());
+  }
+
+  function unfocusItem(ev) {
+    ev.currentTarget.classList.remove('focus');
   }
 
   function addFavorite(ev) {
@@ -308,7 +380,7 @@ window.onload = function initApplication() {
     vanillaMeetup.notificationData.push({ [dataId]: action });
   }
 
-  function makeMarker(data) {
+  function makeMarker(data, dataId) {
     const marker = new google.maps.Marker({
       position: data.position,
       map: vanillaMeetup.map,
@@ -323,7 +395,8 @@ window.onload = function initApplication() {
     marker.addListener('mouseout', () => {
       infoWindow.close();
     });
-    vanillaMeetup.markerStorage.push(marker);
+
+    vanillaMeetup.markerStorage[dataId] = marker;
 
     function makeContentForm(contents) {
       return `<h3>${contents.title}</h3>`;
@@ -331,8 +404,8 @@ window.onload = function initApplication() {
   }
 
   function removeMarker() {
-    vanillaMeetup.markerStorage.forEach(marker => marker.setMap(null));
-    vanillaMeetup.markerStorage = [];
+    Object.keys(vanillaMeetup.markerStorage).forEach(dataId => vanillaMeetup.markerStorage[dataId].setMap(null));
+    vanillaMeetup.markerStorage = {};
   }
 
   function removeList() {

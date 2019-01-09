@@ -14,7 +14,7 @@
 <body>
     <div class="content">
         <header>
-            <h1><span>모</span>두의 <span>모</span>임</h1>
+            <a href="/"><h1><span>모</span>두의 <span>모</span>임</h1></a>
             <nav class="header-nav">
                 <span class="header-notification">
                     <span>알림</span>
@@ -34,13 +34,31 @@
                     </span>
                 </div>
                 <div class="search-nav">
-                    <div class="search-box-wrapper">
-                        <input type="text" id="search-box" placeholder="지역 검색">
+                    <div class="search-map-box-wrapper">
+                        <input type="text" id="search-map-box" placeholder="지역 검색">
                     </div>
-                    <div class="search-details"></div>
+                    <div class="search-meetup-box-wrapper">
+                        <input type="text" id="search-meetup-box" placeholder="모임 검색">
+                    </div>
+                    <div class="search-radius-wrapper">
+                        <span class="search-radius-title">반경 :</span>
+                        <input type="range" id="search-radius-slider" value="5" min="5" max="161">
+                        <span class="search-radius-value">5 km</span>
+                    </div>
+                    <div class="search-order-wrapper">
+                        <span class="search-order-title">정렬 :</span>
+                        <div class="btn-search-order-wrapper">
+                            <input type="radio" id="btn-search-order-best" value="best" checked>
+                            <label for='btn-search-order-best'>추천순</label>
+                            <input type="radio" id="btn-search-order-time" value="time">
+                            <label for='btn-search-order-time'>시간순</label>
+                        </div>
+                    </div>
                 </div>
                 <div class="list-content-layer">
-                    <ul class="list-content-wrapper"></ul>
+                    <ul class="list-content-wrapper">
+                        <div>검색된 모임이 없습니다.<br>모임을 검색하거나, 지도를 클릭해주세요</div>
+                    </ul>
                 </div>
                 <!-- <img class="btn-nav-main-toggle" src="/assets/images/btn_nav_main.png"> -->
             </section>
