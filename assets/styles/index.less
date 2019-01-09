@@ -36,7 +36,7 @@ header {
 
 header > h1 {
     flex-basis: 250px;
-    margin-left: 30px;
+    margin-left: 35px;
     font-family: 'Gugi', cursive;
     font-size: 22px;
     font-weight: bold;
@@ -89,7 +89,19 @@ header > h1 > span {
     transition: all 0.2s;
 }
 
-.notification-icon .hidden{
+.notification-layer {
+    position: absolute;
+    top: 30px;;
+    right: 30px;
+    width: 400px;
+    height: 200px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    background-color: white;
+    z-index: 1;
+}
+
+.hidden{
     opacity: 0;
     transform: scale(0);
 }
