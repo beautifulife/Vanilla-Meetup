@@ -43,7 +43,7 @@ window.onload = function() {
     },
     favoriteMeetupData: localStorage.getItem('favoriteData') ? JSON.parse(localStorage.getItem('favoriteData')) : {},
     getApiKey: (() => {
-      const key = '2e705e58e1279627c794e2e19767d';
+      const key = '[APIKEY]';
 
       return function() {
         return key;
